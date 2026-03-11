@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "age": { "type": "integer" },
+        "gender": { "type": "string", "enum": ["male", "female", "other"] },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_id", "email", "name"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Medical report or prescription scan",
+      "type": "object",
+      "properties": {
+        "report_id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "report_type": { "type": "string", "enum": ["prescription", "lab_report"] },
+        "type": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "image_url": { "type": "string" },
+        "analysis": { "type": "string" },
+        "ocr_text": { "type": "string" },
+        "summary": { "type": "string" },
+        "ai_analysis": { "type": "string" },
+        "medicine_list": { "type": "array" },
+        "lab_results": { "type": "array" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["report_id", "user_id", "report_type", "imageUrl"]
+    },
+    "Medicine": {
+      "title": "Medicine",
+      "description": "Extracted medicine details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "reportId": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "dosage": { "type": "string" },
+        "frequency": { "type": "string" },
+        "purpose": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "reportId", "userId", "name"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Scanned reports"
+    },
+    "/medicines/{medicineId}": {
+      "schema": "Medicine",
+      "description": "Extracted medicines"
+    }
+  }
+}
