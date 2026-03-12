@@ -23,7 +23,11 @@ const Scan: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       setImageBlob(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      if (file.type === 'application/pdf') {
+        setPreviewUrl('pdf-placeholder');
+      } else {
+        setPreviewUrl(URL.createObjectURL(file));
+      }
     }
   };
 
@@ -37,69 +41,89 @@ const Scan: React.FC = () => {
     if (!imageBlob || !user) return;
 
     setLoading(true);
-    setStatus('Uploading report...');
+    setStatus('Uploading document...');
     
     try {
-      // Generate a unique report ID
-      const reportId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      
-      // 1. Upload to Firebase Storage
-      // Path: medical_reports/{user_id}/{report_id}.jpg
-      const storageRef = ref(storage, `medical_reports/${user.uid}/${reportId}.jpg`);
-      await uploadBytes(storageRef, imageBlob);
-      const downloadURL = await getDownloadURL(storageRef);
+      // 1. Upload to Cloud Storage via Backend (to bypass rule/CORS issues)
+      const formData = new FormData();
+      formData.append('file', imageBlob);
+      formData.append('userId', user.uid);
 
-      // 2. Call Combined Backend Analysis API (Multimodal - Faster & More Accurate)
-      setStatus('Analyzing with AI...');
-      const response = await fetch('/api/analyze-medical-report', {
+      const uploadResponse = await fetch('/api/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: downloadURL })
+        body: formData,
       });
-      const analysis = await response.json();
-      const ocrText = analysis.ocr_text || '';
 
-      // 3. Save to Firestore
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || 'Failed to upload document');
+      }
+
+      const { imageUrl, reportId } = await uploadResponse.json();
+      
+      setStatus('Analyzing with AI...');
+
+      // 2. Convert to base64 for Gemini (Frontend call)
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(imageBlob);
+      });
+      const base64Image = await base64Promise;
+
+      // 3. Call Gemini API
+      const analysis = await analyzeMedicalImage(base64Image, imageBlob.type);
+
       setStatus('Saving results...');
-      const reportDoc = await addDoc(collection(db, 'reports'), {
+
+      // 4. Save to Firestore
+      const reportData = {
         user_id: user.uid,
         report_id: reportId,
         report_type: analysis.report_type || 'prescription',
-        type: analysis.report_type || 'prescription', // Keep for compatibility
-        imageUrl: downloadURL,
-        image_url: downloadURL,
-        ocr_text: ocrText,
+        type: analysis.report_type || 'prescription',
+        imageUrl: imageUrl,
+        image_url: imageUrl,
+        ocr_text: analysis.ocr_text || '',
         summary: analysis.summary || '',
         ai_analysis: analysis.ai_analysis || '',
         medicine_list: analysis.medicine_list || [],
         lab_results: analysis.lab_results || [],
-        analysis: JSON.stringify(analysis), // Keep for compatibility
+        analysis: JSON.stringify(analysis),
         created_at: serverTimestamp(),
-      });
+      };
 
-      // 4. Save medicines to dedicated collection if any
-      if (analysis.medicine_list && Array.isArray(analysis.medicine_list)) {
+      const reportsCollection = collection(db, 'reports');
+      const reportRef = await addDoc(reportsCollection, reportData);
+
+      // 5. Save medicines to dedicated collection if applicable
+      if (analysis.medicine_list && Array.isArray(analysis.medicine_list) && analysis.medicine_list.length > 0) {
+        const { writeBatch, doc: firestoreDoc } = await import('firebase/firestore');
+        const batch = writeBatch(db);
+        
         for (const med of analysis.medicine_list) {
-          await addDoc(collection(db, 'medicines'), {
-            reportId: reportDoc.id,
+          const medRef = firestoreDoc(collection(db, 'medicines'));
+          batch.set(medRef, {
+            reportId: reportRef.id,
             userId: user.uid,
             medicine_name: med.name,
-            name: med.name, // Keep for compatibility
+            name: med.name,
             dosage: med.dosage,
             frequency: med.timing || '',
             use: med.purpose,
-            purpose: med.purpose, // Keep for compatibility
+            purpose: med.purpose,
             side_effects: med.side_effects || 'Consult your doctor for potential side effects.',
             createdAt: serverTimestamp(),
           });
         }
+        await batch.commit();
       }
-
+      
       setStatus('Success!');
       setTimeout(() => navigate('/reports'), 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setStatus('Error occurred. Please try again.');
+      setStatus(`Error: ${err.message || 'Please try again.'}`);
       setLoading(false);
     }
   };
@@ -115,8 +139,17 @@ const Scan: React.FC = () => {
         className="flex-1 min-h-[300px] border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center gap-4 bg-slate-50 overflow-hidden relative shadow-inner"
       >
         {previewUrl ? (
-          <div className="w-full h-full relative group">
-            <img src={previewUrl} alt="Preview" className="w-full h-full object-contain" />
+          <div className="w-full h-full relative group flex items-center justify-center">
+            {previewUrl === 'pdf-placeholder' ? (
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-32 h-32 bg-red-50 rounded-2xl flex items-center justify-center text-red-500">
+                  <FileText size={64} />
+                </div>
+                <p className="font-bold text-slate-700">{(imageBlob as File)?.name}</p>
+              </div>
+            ) : (
+              <img src={previewUrl} alt="Preview" className="w-full h-full object-contain" />
+            )}
             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <button 
                 onClick={() => { setPreviewUrl(null); setImageBlob(null); }}
@@ -175,7 +208,7 @@ const Scan: React.FC = () => {
 
       <input 
         type="file" 
-        accept="image/*" 
+        accept="image/*,application/pdf" 
         className="hidden" 
         ref={fileInputRef}
         onChange={handleFileChange}

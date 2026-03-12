@@ -10,48 +10,83 @@ interface CameraScannerProps {
 const CameraScanner: React.FC<CameraScannerProps> = ({ onCapture, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
+  const stopStream = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setStream(null);
+  }, []);
+
   const startCamera = useCallback(async () => {
     setIsInitializing(true);
     setError(null);
+    
     try {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      stopStream();
 
-      const newStream = await navigator.mediaDevices.getUserMedia({
+      // Try with high resolution first
+      const constraints: MediaStreamConstraints = {
         video: {
           facingMode: 'environment',
           width: { ideal: 1920 },
           height: { ideal: 1080 }
         },
         audio: false
-      });
+      };
+
+      let newStream: MediaStream;
+      try {
+        newStream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (e) {
+        console.warn('Failed to get 1080p stream, falling back to default video', e);
+        // Fallback to simpler constraints if 1080p fails
+        newStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' }, 
+          audio: false 
+        });
+      }
+
+      streamRef.current = newStream;
+      setStream(newStream);
 
       if (videoRef.current) {
         videoRef.current.srcObject = newStream;
+        // Ensure video plays
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          console.error('Error playing video:', playErr);
+        }
       }
-      setStream(newStream);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error accessing camera:', err);
-      setError('Could not access camera. Please ensure permissions are granted.');
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError('Camera permission denied. Please allow camera access in your browser settings.');
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setError('No camera found on this device.');
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        setError('Camera is already in use by another application or tab.');
+      } else {
+        setError(`Error accessing camera: ${err.message || 'Unknown error'}`);
+      }
     } finally {
       setIsInitializing(false);
     }
-  }, [stream]);
+  }, [stopStream]);
 
   useEffect(() => {
     startCamera();
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      stopStream();
     };
-  }, []);
+  }, [startCamera, stopStream]);
 
   const capturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
@@ -60,18 +95,15 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onCapture, onClose }) => 
       const context = canvas.getContext('2d');
 
       if (context) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        // Use actual video dimensions
+        canvas.width = video.videoWidth || video.clientWidth;
+        canvas.height = video.videoHeight || video.clientHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         const imageData = canvas.toDataURL('image/jpeg', 0.8);
         setCapturedImage(imageData);
         
-        // Stop the stream to save battery/resources while previewing
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-          setStream(null);
-        }
+        stopStream();
       }
     }
   };

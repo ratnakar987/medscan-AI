@@ -89,10 +89,13 @@ const Reports: React.FC = () => {
             <div className="bg-secondary p-3 rounded-xl">
               <FileText className="text-primary" size={24} />
             </div>
-            <div className="flex-1">
-              <h4 className="font-bold capitalize">{report.type.replace('_', ' ')}</h4>
-              <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
-                <Calendar size={12} />
+            <div className="flex-1 min-w-0">
+              <h4 className="font-bold capitalize truncate">{report.type.replace('_', ' ')}</h4>
+              <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                {report.summary || 'No summary available'}
+              </p>
+              <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-1">
+                <Calendar size={10} />
                 {report.created_at?.toDate().toLocaleDateString()}
               </div>
             </div>
@@ -160,20 +163,19 @@ const Reports: React.FC = () => {
                 </div>
 
                 <div className="prose prose-slate max-w-none">
-                  <h4 className="text-lg font-bold mb-3">Raw OCR Text</h4>
-                  <div className="bg-slate-50 p-4 rounded-2xl text-sm font-mono whitespace-pre-wrap mb-6">
-                    {selectedReport.ocr_text || 'No OCR text available.'}
+                  {/* Prominent Summary Section */}
+                  <div className="bg-primary/5 border border-primary/10 p-5 rounded-2xl mb-6 shadow-sm">
+                    <h4 className="text-lg font-bold text-primary mb-2 flex items-center gap-2">
+                      <FileText size={20} /> Prescription Summary
+                    </h4>
+                    <p className="text-slate-700 leading-relaxed font-medium">
+                      {selectedReport.summary || JSON.parse(selectedReport.analysis || '{}').summary || 'No summary available.'}
+                    </p>
                   </div>
 
-                  <h4 className="text-lg font-bold mb-3">AI Analysis</h4>
+                  <h4 className="text-lg font-bold mb-3">AI Analysis & Insights</h4>
                   <div className="bg-slate-50 p-4 rounded-2xl text-sm leading-relaxed">
                     <div className="flex flex-col gap-4">
-                      {/* Summary */}
-                      <div>
-                        <p className="font-bold text-primary mb-1">Summary</p>
-                        <p>{selectedReport.summary || JSON.parse(selectedReport.analysis || '{}').summary}</p>
-                      </div>
-
                       {/* Detailed AI Analysis */}
                       {selectedReport.ai_analysis && (
                         <div>
@@ -233,6 +235,11 @@ const Reports: React.FC = () => {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  <h4 className="text-lg font-bold mt-8 mb-3 text-slate-400">Raw OCR Text</h4>
+                  <div className="bg-slate-50 p-4 rounded-2xl text-xs font-mono whitespace-pre-wrap mb-6 text-slate-500 border border-slate-100">
+                    {selectedReport.ocr_text || 'No OCR text available.'}
                   </div>
                 </div>
                 

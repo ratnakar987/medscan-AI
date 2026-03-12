@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
@@ -7,30 +7,22 @@ export const analyzeMedicalImage = async (base64Image: string, mimeType: string)
   
   const prompt = `
     Analyze this medical document (prescription or lab report).
-    Extract the following information in JSON format:
+    
+    1. Extract all text (OCR).
+    2. Classify as "prescription" or "lab_report".
+    3. Summarize for a patient.
+    4. If prescription: Extract medicines (name, dosage, timing, purpose, side effects).
+    5. If lab report: Extract results (parameter, value, range, abnormal status, explanation).
+    
+    Return JSON:
     {
-      "type": "prescription" | "lab_report",
-      "summary": "Short summary of what this document is about",
-      "medicines": [
-        {
-          "name": "Name of medicine",
-          "dosage": "e.g. 500mg",
-          "frequency": "e.g. Twice a day",
-          "purpose": "What is it for?"
-        }
-      ],
-      "labResults": [
-        {
-          "testName": "Name of test",
-          "value": "Result value",
-          "referenceRange": "Normal range",
-          "interpretation": "Is it normal, high, or low?"
-        }
-      ],
-      "recommendations": ["List of advice or next steps"]
+      "report_type": "prescription" | "lab_report",
+      "summary": "...",
+      "ai_analysis": "...",
+      "ocr_text": "...",
+      "medicine_list": [{"name": "...", "dosage": "...", "timing": "...", "purpose": "...", "side_effects": "..."}],
+      "lab_results": [{"parameter": "...", "value": "...", "reference_range": "...", "is_abnormal": bool, "explanation": "..."}]
     }
-    If it's a prescription, focus on medicines. If it's a lab report, focus on labResults.
-    Be accurate and concise.
   `;
 
   const response = await ai.models.generateContent({
@@ -41,7 +33,7 @@ export const analyzeMedicalImage = async (base64Image: string, mimeType: string)
           { text: prompt },
           {
             inlineData: {
-              data: base64Image.split(',')[1],
+              data: base64Image.includes(',') ? base64Image.split(',')[1] : base64Image,
               mimeType
             }
           }
@@ -49,7 +41,8 @@ export const analyzeMedicalImage = async (base64Image: string, mimeType: string)
       }
     ],
     config: {
-      responseMimeType: "application/json"
+      responseMimeType: "application/json",
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
     }
   });
 
