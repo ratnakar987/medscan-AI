@@ -36,13 +36,15 @@ service cloud.firestore {
     // Collection: medicines
     // Document ID: medicineId
     // Fields:
-    //   - id: string (required)
     //   - reportId: string (required)
     //   - userId: string (required)
-    //   - name: string (required)
+    //   - medicine_name: string (required)
+    //   - name: string (optional)
     //   - dosage: string (optional)
     //   - frequency: string (optional)
+    //   - use: string (optional)
     //   - purpose: string (optional)
+    //   - side_effects: string (optional)
     //   - createdAt: timestamp (required)
     //
     // ===============================================================
@@ -59,7 +61,10 @@ service cloud.firestore {
     }
 
     function isDocOwner() {
-      return isAuthenticated() && request.auth.uid == resource.data.user_id;
+      return isAuthenticated() && (
+        (resource.data.user_id == request.auth.uid) || 
+        (resource.data.userId == request.auth.uid)
+      );
     }
 
     function isValidEmail(email) {
@@ -83,9 +88,9 @@ service cloud.firestore {
     }
 
     function isValidMedicine(data) {
-      return data.keys().hasAll(['id', 'reportId', 'userId', 'name', 'createdAt']) &&
+      return data.keys().hasAll(['reportId', 'userId', 'medicine_name', 'createdAt']) &&
              data.userId == request.auth.uid &&
-             data.name is string && data.name.size() > 0 &&
+             data.medicine_name is string &&
              data.createdAt is timestamp;
     }
 

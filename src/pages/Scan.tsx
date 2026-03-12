@@ -49,26 +49,17 @@ const Scan: React.FC = () => {
       await uploadBytes(storageRef, imageBlob);
       const downloadURL = await getDownloadURL(storageRef);
 
-      // 2. Call Backend OCR API for raw text
-      setStatus('Performing OCR...');
-      const ocrResponse = await fetch('/api/analyze-ocr', {
+      // 2. Call Combined Backend Analysis API (Multimodal - Faster & More Accurate)
+      setStatus('Analyzing with AI...');
+      const response = await fetch('/api/analyze-medical-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_url: downloadURL })
       });
-      const ocrData = await ocrResponse.json();
-      const ocrText = ocrData.extracted_text || '';
+      const analysis = await response.json();
+      const ocrText = analysis.ocr_text || '';
 
-      // 3. Call Backend AI Analysis API
-      setStatus('Analyzing with AI...');
-      const aiResponse = await fetch('/api/ai-analyze-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ocr_text: ocrText })
-      });
-      const analysis = await aiResponse.json();
-
-      // 4. Save to Firestore
+      // 3. Save to Firestore
       setStatus('Saving results...');
       const reportDoc = await addDoc(collection(db, 'reports'), {
         user_id: user.uid,
@@ -86,16 +77,19 @@ const Scan: React.FC = () => {
         created_at: serverTimestamp(),
       });
 
-      // 5. Save medicines to dedicated collection if any
+      // 4. Save medicines to dedicated collection if any
       if (analysis.medicine_list && Array.isArray(analysis.medicine_list)) {
         for (const med of analysis.medicine_list) {
           await addDoc(collection(db, 'medicines'), {
             reportId: reportDoc.id,
             userId: user.uid,
-            name: med.name,
+            medicine_name: med.name,
+            name: med.name, // Keep for compatibility
             dosage: med.dosage,
             frequency: med.timing || '',
-            purpose: med.purpose,
+            use: med.purpose,
+            purpose: med.purpose, // Keep for compatibility
+            side_effects: med.side_effects || 'Consult your doctor for potential side effects.',
             createdAt: serverTimestamp(),
           });
         }

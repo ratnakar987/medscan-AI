@@ -81,7 +81,7 @@ const Dashboard: React.FC = () => {
           </div>
           <span className="text-sm font-bold text-slate-700 text-center">Medical History</span>
         </Link>
-        <Link to="/reports" className="card flex flex-col items-center justify-center gap-3 py-6 hover:bg-secondary/30 transition-colors group">
+        <Link to="/medicines" className="card flex flex-col items-center justify-center gap-3 py-6 hover:bg-secondary/30 transition-colors group">
           <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform">
             <Pill size={24} />
           </div>

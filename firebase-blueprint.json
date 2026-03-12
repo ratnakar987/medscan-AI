@@ -44,13 +44,16 @@
         "id": { "type": "string" },
         "reportId": { "type": "string" },
         "userId": { "type": "string" },
+        "medicine_name": { "type": "string" },
         "name": { "type": "string" },
         "dosage": { "type": "string" },
         "frequency": { "type": "string" },
+        "use": { "type": "string" },
         "purpose": { "type": "string" },
+        "side_effects": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "reportId", "userId", "name"]
+      "required": ["reportId", "userId", "medicine_name"]
     }
   },
   "firestore": {

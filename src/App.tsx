@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Scan from './pages/Scan';
 import Reports from './pages/Reports';
 import Profile from './pages/Profile';
+import Medicines from './pages/Medicines';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="/scan" element={<PrivateRoute><Scan /></PrivateRoute>} />
             <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+            <Route path="/medicines" element={<PrivateRoute><Medicines /></PrivateRoute>} />
           </Route>
         </Routes>
       </Router>

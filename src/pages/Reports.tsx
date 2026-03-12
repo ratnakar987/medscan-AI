@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, query, where, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { db, storage } from '../firebase';
+import { ref, deleteObject } from 'firebase/storage';
 import { useAuth } from '../context/AuthContext';
-import { FileText, ChevronRight, Search, Filter, Calendar } from 'lucide-react';
+import { FileText, ChevronRight, Search, Filter, Calendar, Trash2, Download, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 
@@ -32,6 +33,30 @@ const Reports: React.FC = () => {
     r.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (r.analysis && r.analysis.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleDelete = async (report: any) => {
+    if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) return;
+
+    try {
+      // 1. Delete from Firestore
+      await deleteDoc(doc(db, 'reports', report.id));
+      
+      // 2. Delete from Storage if URL exists
+      if (report.imageUrl) {
+        const storageRef = ref(storage, report.imageUrl);
+        await deleteObject(storageRef).catch(err => console.error('Storage delete error:', err));
+      }
+      
+      setSelectedReport(null);
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('Failed to delete report.');
+    }
+  };
+
+  const handleDownload = (url: string) => {
+    window.open(url, '_blank');
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -118,6 +143,21 @@ const Reports: React.FC = () => {
                   alt="Report Scan" 
                   className="w-full rounded-2xl border border-slate-100"
                 />
+
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => handleDownload(selectedReport.imageUrl)}
+                    className="flex-1 btn-secondary flex items-center justify-center gap-2 py-3"
+                  >
+                    <Download size={18} /> Download
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(selectedReport)}
+                    className="flex-1 bg-red-50 text-red-500 rounded-xl font-medium flex items-center justify-center gap-2 py-3 hover:bg-red-100 transition-colors"
+                  >
+                    <Trash2 size={18} /> Delete
+                  </button>
+                </div>
 
                 <div className="prose prose-slate max-w-none">
                   <h4 className="text-lg font-bold mb-3">Raw OCR Text</h4>
