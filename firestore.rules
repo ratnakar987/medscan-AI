@@ -21,16 +21,19 @@ service cloud.firestore {
     // Fields:
     //   - report_id: string (required)
     //   - user_id: string (required)
-    //   - report_type: string (required, enum: prescription, lab_report)
+    //   - report_type: string (required, enum: prescription, lab_report, imaging_report, ecg, discharge_summary, other)
     //   - type: string (optional)
     //   - imageUrl: string (required)
     //   - image_url: string (optional)
     //   - analysis: string (optional)
     //   - ocr_text: string (optional)
     //   - summary: string (optional)
+    //   - main_findings: list (optional)
     //   - ai_analysis: string (optional)
     //   - medicine_list: list (optional)
     //   - lab_results: list (optional)
+    //   - imaging_details: map (optional)
+    //   - ecg_details: map (optional)
     //   - created_at: timestamp (required)
     //
     // Collection: medicines
@@ -80,9 +83,10 @@ service cloud.firestore {
     }
 
     function isValidReport(data) {
+      let validTypes = ['prescription', 'lab_report', 'imaging_report', 'ecg', 'discharge_summary', 'other'];
       return data.keys().hasAll(['report_id', 'user_id', 'report_type', 'imageUrl', 'created_at']) &&
              data.user_id == request.auth.uid &&
-             data.report_type in ['prescription', 'lab_report'] &&
+             data.report_type in validTypes &&
              data.imageUrl is string &&
              data.created_at is timestamp;
     }

@@ -54,12 +54,21 @@ const Scan: React.FC = () => {
         body: formData,
       });
 
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
-        throw new Error(errorData.error || 'Failed to upload document');
+      let responseData;
+      const contentType = uploadResponse.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        responseData = await uploadResponse.json();
+      } else {
+        const text = await uploadResponse.text();
+        console.error('Non-JSON response received:', text);
+        throw new Error('Server returned an unexpected response format. Please try again.');
       }
 
-      const { imageUrl, reportId } = await uploadResponse.json();
+      if (!uploadResponse.ok) {
+        throw new Error(responseData.error || 'Failed to upload document');
+      }
+
+      const { imageUrl, reportId } = responseData;
       
       setStatus('Analyzing with AI...');
 
@@ -86,9 +95,12 @@ const Scan: React.FC = () => {
         image_url: imageUrl,
         ocr_text: analysis.ocr_text || '',
         summary: analysis.summary || '',
+        main_findings: analysis.main_findings || [],
         ai_analysis: analysis.ai_analysis || '',
         medicine_list: analysis.medicine_list || [],
         lab_results: analysis.lab_results || [],
+        imaging_details: analysis.imaging_details || null,
+        ecg_details: analysis.ecg_details || null,
         analysis: JSON.stringify(analysis),
         created_at: serverTimestamp(),
       };
@@ -119,7 +131,16 @@ const Scan: React.FC = () => {
         await batch.commit();
       }
       
-      setStatus('Success!');
+      const typeLabels: Record<string, string> = {
+        'prescription': 'Prescription',
+        'lab_report': 'Lab report',
+        'imaging_report': 'Imaging report',
+        'ecg': 'ECG report',
+        'discharge_summary': 'Discharge summary',
+        'other': 'Medical report'
+      };
+      const typeLabel = typeLabels[analysis.report_type] || 'Medical report';
+      setStatus(`${typeLabel} analyzed successfully!`);
       setTimeout(() => navigate('/reports'), 1500);
     } catch (err: any) {
       console.error(err);
@@ -132,7 +153,7 @@ const Scan: React.FC = () => {
     <div className="flex flex-col gap-6 min-h-[80vh]">
       <div className="text-center">
         <h2 className="text-2xl font-bold">Scan Document</h2>
-        <p className="text-slate-500">Capture your prescription or lab report</p>
+        <p className="text-slate-500">Capture your prescription, lab report, CT/MRI, or ECG</p>
       </div>
 
       <div 
@@ -239,7 +260,7 @@ const Scan: React.FC = () => {
             <h3 className="text-2xl font-bold text-slate-800 mb-2">{status}</h3>
             <p className="text-slate-500 max-w-xs">
               {status.includes('Analyzing') 
-                ? 'Our AI is reading your document to extract medicines and lab results...' 
+                ? 'Our AI is reading your document to extract key findings and medical details...' 
                 : 'Securing your medical data in our cloud storage...'}
             </p>
           </motion.div>

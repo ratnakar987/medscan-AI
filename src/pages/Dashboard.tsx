@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
-import { Pill, FileText, Plus, ChevronRight, Activity, Camera } from 'lucide-react';
+import { Pill, FileText, Plus, ChevronRight, Activity, Camera, Heart, Scan as ScanIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 
@@ -41,6 +41,26 @@ const Dashboard: React.FC = () => {
       unsubMeds();
     };
   }, [user]);
+
+  const getReportIcon = (type: string) => {
+    switch (type) {
+      case 'prescription': return <Pill size={20} />;
+      case 'lab_report': return <Activity size={20} />;
+      case 'imaging_report': return <ScanIcon size={20} />;
+      case 'ecg': return <Heart size={20} />;
+      default: return <FileText size={20} />;
+    }
+  };
+
+  const getReportColor = (type: string) => {
+    switch (type) {
+      case 'prescription': return 'bg-emerald-50 text-emerald-600';
+      case 'lab_report': return 'bg-blue-50 text-blue-600';
+      case 'imaging_report': return 'bg-purple-50 text-purple-600';
+      case 'ecg': return 'bg-rose-50 text-rose-600';
+      default: return 'bg-secondary text-primary';
+    }
+  };
 
   const latestReport = recentReports[0];
 
@@ -170,8 +190,8 @@ const Dashboard: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="card flex items-center gap-4 hover:border-primary/30 transition-colors cursor-pointer"
               >
-                <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-primary">
-                  <FileText size={20} />
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getReportColor(report.report_type || report.type)}`}>
+                  {getReportIcon(report.report_type || report.type)}
                 </div>
                 <div className="flex-1">
                   <h4 className="font-bold text-slate-800 capitalize text-sm">{report.report_type?.replace('_', ' ') || report.type?.replace('_', ' ')}</h4>

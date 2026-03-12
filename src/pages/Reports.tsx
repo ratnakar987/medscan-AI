@@ -5,7 +5,7 @@ import { ref, deleteObject } from 'firebase/storage';
 import { useAuth } from '../context/AuthContext';
 import { FileText, ChevronRight, Search, Filter, Calendar, Trash2, Download, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import ReactMarkdown from 'react-markdown';
+import InterpretationView from '../components/InterpretationView';
 
 const Reports: React.FC = () => {
   const { user } = useAuth();
@@ -162,85 +162,13 @@ const Reports: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="prose prose-slate max-w-none">
-                  {/* Prominent Summary Section */}
-                  <div className="bg-primary/5 border border-primary/10 p-5 rounded-2xl mb-6 shadow-sm">
-                    <h4 className="text-lg font-bold text-primary mb-2 flex items-center gap-2">
-                      <FileText size={20} /> Prescription Summary
-                    </h4>
-                    <p className="text-slate-700 leading-relaxed font-medium">
-                      {selectedReport.summary || JSON.parse(selectedReport.analysis || '{}').summary || 'No summary available.'}
-                    </p>
-                  </div>
+                <div className="mt-4">
+                  <InterpretationView report={selectedReport} />
+                </div>
 
-                  <h4 className="text-lg font-bold mb-3">AI Analysis & Insights</h4>
-                  <div className="bg-slate-50 p-4 rounded-2xl text-sm leading-relaxed">
-                    <div className="flex flex-col gap-4">
-                      {/* Detailed AI Analysis */}
-                      {selectedReport.ai_analysis && (
-                        <div>
-                          <p className="font-bold text-primary mb-1">Detailed Explanation</p>
-                          <div className="prose prose-sm max-w-none">
-                            <ReactMarkdown>{selectedReport.ai_analysis}</ReactMarkdown>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Medicines */}
-                      {((selectedReport.medicine_list && selectedReport.medicine_list.length > 0) || (JSON.parse(selectedReport.analysis || '{}').medicines)) && (
-                        <div>
-                          <p className="font-bold text-primary mb-2">Medicines</p>
-                          <div className="flex flex-col gap-2">
-                            {(selectedReport.medicine_list || JSON.parse(selectedReport.analysis || '{}').medicines || []).map((m: any, i: number) => (
-                              <div key={i} className="bg-white p-3 rounded-xl border border-slate-100">
-                                <p className="font-bold">{m.name}</p>
-                                <p className="text-xs text-slate-500">{m.dosage} • {m.timing || m.frequency}</p>
-                                <p className="text-xs mt-1 italic">{m.purpose}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Lab Results */}
-                      {((selectedReport.lab_results && selectedReport.lab_results.length > 0) || (JSON.parse(selectedReport.analysis || '{}').labResults)) && (
-                        <div>
-                          <p className="font-bold text-primary mb-2">Lab Results</p>
-                          <div className="flex flex-col gap-2">
-                            {(selectedReport.lab_results || JSON.parse(selectedReport.analysis || '{}').labResults || []).map((r: any, i: number) => (
-                              <div key={i} className="bg-white p-3 rounded-xl border border-slate-100">
-                                <div className="flex justify-between">
-                                  <p className="font-bold">{r.parameter || r.testName}</p>
-                                  <p className={(r.is_abnormal || r.interpretation?.toLowerCase().includes('high') || r.interpretation?.toLowerCase().includes('low')) ? 'text-red-500 font-bold' : 'text-green-600 font-bold'}>
-                                    {r.value}
-                                  </p>
-                                </div>
-                                {r.referenceRange && <p className="text-xs text-slate-500">Ref: {r.referenceRange}</p>}
-                                <p className="text-xs mt-1">{r.explanation || r.interpretation}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Recommendations (Legacy) */}
-                      {JSON.parse(selectedReport.analysis || '{}').recommendations && (
-                        <div>
-                          <p className="font-bold text-primary mb-1">Recommendations</p>
-                          <ul className="list-disc pl-4">
-                            {JSON.parse(selectedReport.analysis || '{}').recommendations.map((rec: string, i: number) => (
-                              <li key={i}>{rec}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <h4 className="text-lg font-bold mt-8 mb-3 text-slate-400">Raw OCR Text</h4>
-                  <div className="bg-slate-50 p-4 rounded-2xl text-xs font-mono whitespace-pre-wrap mb-6 text-slate-500 border border-slate-100">
-                    {selectedReport.ocr_text || 'No OCR text available.'}
-                  </div>
+                <h4 className="text-lg font-bold mt-8 mb-3 text-slate-400">Raw OCR Text</h4>
+                <div className="bg-slate-50 p-4 rounded-2xl text-xs font-mono whitespace-pre-wrap mb-6 text-slate-500 border border-slate-100">
+                  {selectedReport.ocr_text || 'No OCR text available.'}
                 </div>
                 
                 <p className="text-[10px] text-slate-400 italic text-center">
