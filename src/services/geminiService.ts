@@ -3,20 +3,23 @@ import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
 export const analyzeMedicalImage = async (base64Image: string, mimeType: string) => {
-  const model = "gemini-3-flash-preview";
+  const model = "gemini-3.1-pro-preview";
   
   const prompt = `
-    Analyze this medical document (e.g., prescription, lab report, CT scan, MRI, ECG, discharge summary, etc.).
+    Analyze this medical image or document. It could be a text-based report (like a prescription or lab result) or a raw medical image (like a CT scan slice, MRI, X-ray, or ECG tracing).
     
-    1. Extract all text (OCR).
-    2. Classify the document type (e.g., "prescription", "lab_report", "imaging_report", "ecg", "discharge_summary", "other").
-    3. Provide a concise summary (2-3 sentences max) for a patient. Use simple, non-medical language.
-    4. Highlight 3-5 "main_findings" as bullet points. If there are complex medical terms, explain them briefly in brackets.
-    5. If it's an imaging report (CT/MRI/X-Ray): Extract "impressions" and "key_observations".
-    6. If it's an ECG: Extract "heart_rate", "rhythm", and "interpretation".
-    7. If prescription: Extract medicines (name, dosage, timing, purpose, side effects).
-    8. If lab report: Extract results (parameter, value, range, abnormal status, explanation).
+    1. If it's a text document: Extract all text (OCR) and classify it.
+    2. If it's a raw medical image (e.g., a CT scan of a body part): Describe what is visible, identify the body part, and provide general medical insights based on the visual features.
+    3. Classify the document/image type (e.g., "prescription", "lab_report", "imaging_report", "ecg", "discharge_summary", "raw_medical_image", "other").
+    4. Provide a concise summary (2-3 sentences max) for a patient. Use simple, non-medical language.
+    5. Highlight 3-5 "main_findings" as bullet points. If there are complex medical terms, explain them briefly in brackets.
+    6. If it's an imaging report or raw medical image: Extract or describe "impressions" and "key_observations".
+    7. If it's an ECG: Extract "heart_rate", "rhythm", and "interpretation".
+    8. If prescription: Extract medicines (name, dosage, timing, purpose, side effects).
+    9. If lab report: Extract results (parameter, value, range, abnormal status, explanation).
     
+    IMPORTANT: Always provide a "summary" and "ai_analysis" (detailed interpretation) even if the image contains no text. If you are unsure about specific details, provide general guidance and emphasize the need for professional medical consultation.
+
     Return JSON:
     {
       "report_type": "string",

@@ -48,6 +48,7 @@ const Dashboard: React.FC = () => {
       case 'lab_report': return <Activity size={20} />;
       case 'imaging_report': return <ScanIcon size={20} />;
       case 'ecg': return <Heart size={20} />;
+      case 'raw_medical_image': return <ScanIcon size={20} />;
       default: return <FileText size={20} />;
     }
   };
@@ -58,6 +59,7 @@ const Dashboard: React.FC = () => {
       case 'lab_report': return 'bg-blue-50 text-blue-600';
       case 'imaging_report': return 'bg-purple-50 text-purple-600';
       case 'ecg': return 'bg-rose-50 text-rose-600';
+      case 'raw_medical_image': return 'bg-indigo-50 text-indigo-600';
       default: return 'bg-secondary text-primary';
     }
   };

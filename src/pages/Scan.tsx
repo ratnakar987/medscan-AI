@@ -137,6 +137,7 @@ const Scan: React.FC = () => {
         'imaging_report': 'Imaging report',
         'ecg': 'ECG report',
         'discharge_summary': 'Discharge summary',
+        'raw_medical_image': 'Medical image',
         'other': 'Medical report'
       };
       const typeLabel = typeLabels[analysis.report_type] || 'Medical report';
