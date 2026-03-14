@@ -22,7 +22,7 @@
       "properties": {
         "report_id": { "type": "string" },
         "user_id": { "type": "string" },
-        "report_type": { "type": "string", "enum": ["prescription", "lab_report"] },
+        "report_type": { "type": "string", "enum": ["prescription", "lab_report", "imaging_report", "ecg", "discharge_summary", "raw_medical_image", "other"] },
         "type": { "type": "string" },
         "imageUrl": { "type": "string" },
         "image_url": { "type": "string" },
@@ -32,6 +32,8 @@
         "ai_analysis": { "type": "string" },
         "medicine_list": { "type": "array" },
         "lab_results": { "type": "array" },
+        "imaging_details": { "type": "object" },
+        "ecg_details": { "type": "object" },
         "created_at": { "type": "string", "format": "date-time" }
       },
       "required": ["report_id", "user_id", "report_type", "imageUrl"]

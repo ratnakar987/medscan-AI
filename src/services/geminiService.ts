@@ -3,6 +3,9 @@ import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
 export const analyzeMedicalImage = async (base64Image: string, mimeType: string) => {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("Gemini API Key is missing. Please set the GEMINI_API_KEY environment variable in your deployment settings.");
+  }
   const model = "gemini-3-flash-preview";
   
   const prompt = `

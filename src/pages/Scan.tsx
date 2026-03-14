@@ -44,36 +44,21 @@ const Scan: React.FC = () => {
     setStatus('Uploading document...');
     
     try {
-      // 1. Upload to Cloud Storage via Backend (to bypass rule/CORS issues)
-      const formData = new FormData();
-      formData.append('file', imageBlob);
-      formData.append('userId', user.uid);
-
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      let responseData;
-      const contentType = uploadResponse.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        responseData = await uploadResponse.json();
-      } else {
-        const text = await uploadResponse.text();
-        console.error('Non-JSON response received:', text);
-        
-        if (text.includes('Cookie check') || text.includes('Authenticate in new window')) {
-          throw new Error('AI Studio security check required. Please click "Open in new tab" at the top right of the preview or "Authenticate in new window" if you see the option.');
-        }
-        
-        throw new Error('Server returned an unexpected response format. Please try again.');
+      // 1. Upload to Firebase Storage directly from client
+      // This is more reliable on Vercel (no body size limits)
+      const reportId = Math.random().toString(36).substring(2, 15);
+      let extension = 'jpg';
+      if (imageBlob.type === 'application/pdf') {
+        extension = 'pdf';
+      } else if (imageBlob.type.startsWith('image/')) {
+        extension = imageBlob.type.split('/')[1] || 'jpg';
       }
-
-      if (!uploadResponse.ok) {
-        throw new Error(responseData.error || 'Failed to upload document');
-      }
-
-      const { imageUrl, reportId } = responseData;
+      
+      const storagePath = `medical_reports/${user.uid}/${reportId}.${extension}`;
+      const storageRef = ref(storage, storagePath);
+      
+      await uploadBytes(storageRef, imageBlob);
+      const imageUrl = await getDownloadURL(storageRef);
       
       setStatus('Analyzing with AI...');
 
@@ -219,10 +204,10 @@ const Scan: React.FC = () => {
           </button>
           
           <button 
-            disabled={!imageBlob || loading}
+            disabled={!imageBlob || loading || !user}
             onClick={handleScan}
             className={`py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${
-              !imageBlob || loading 
+              !imageBlob || loading || !user
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
                 : 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 active:scale-95'
             }`}
@@ -234,6 +219,11 @@ const Scan: React.FC = () => {
             )}
           </button>
         </div>
+        {!user && (
+          <p className="text-center text-red-500 text-sm font-medium">
+            Please sign in to analyze and save your documents.
+          </p>
+        )}
       </div>
 
       <input 
