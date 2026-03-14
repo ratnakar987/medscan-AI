@@ -83,7 +83,7 @@ service cloud.firestore {
     }
 
     function isValidReport(data) {
-      let validTypes = ['prescription', 'lab_report', 'imaging_report', 'ecg', 'discharge_summary', 'other'];
+      let validTypes = ['prescription', 'lab_report', 'imaging_report', 'ecg', 'discharge_summary', 'raw_medical_image', 'other'];
       return data.keys().hasAll(['report_id', 'user_id', 'report_type', 'imageUrl', 'created_at']) &&
              data.user_id == request.auth.uid &&
              data.report_type in validTypes &&

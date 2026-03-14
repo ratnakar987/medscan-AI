@@ -3,7 +3,7 @@ import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
 export const analyzeMedicalImage = async (base64Image: string, mimeType: string) => {
-  const model = "gemini-3.1-pro-preview";
+  const model = "gemini-3-flash-preview";
   
   const prompt = `
     Analyze this medical image or document. It could be a text-based report (like a prescription or lab result) or a raw medical image (like a CT scan slice, MRI, X-ray, or ECG tracing).
@@ -55,5 +55,13 @@ export const analyzeMedicalImage = async (base64Image: string, mimeType: string)
     }
   });
 
-  return JSON.parse(response.text || "{}");
+  const text = response.text;
+  if (!text) throw new Error("No response from AI model");
+  
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error("Failed to parse AI response:", text);
+    throw new Error("Failed to interpret the medical document. Please try a clearer image.");
+  }
 };

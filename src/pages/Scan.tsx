@@ -61,6 +61,11 @@ const Scan: React.FC = () => {
       } else {
         const text = await uploadResponse.text();
         console.error('Non-JSON response received:', text);
+        
+        if (text.includes('Cookie check') || text.includes('Authenticate in new window')) {
+          throw new Error('AI Studio security check required. Please click "Open in new tab" at the top right of the preview or "Authenticate in new window" if you see the option.');
+        }
+        
         throw new Error('Server returned an unexpected response format. Please try again.');
       }
 
@@ -86,11 +91,14 @@ const Scan: React.FC = () => {
       setStatus('Saving results...');
 
       // 4. Save to Firestore
+      const validTypes = ['prescription', 'lab_report', 'imaging_report', 'ecg', 'discharge_summary', 'raw_medical_image', 'other'];
+      const reportType = validTypes.includes(analysis.report_type) ? analysis.report_type : 'other';
+
       const reportData = {
         user_id: user.uid,
         report_id: reportId,
-        report_type: analysis.report_type || 'prescription',
-        type: analysis.report_type || 'prescription',
+        report_type: reportType,
+        type: reportType,
         imageUrl: imageUrl,
         image_url: imageUrl,
         ocr_text: analysis.ocr_text || '',
