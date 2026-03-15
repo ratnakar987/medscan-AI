@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Pill, FileText, Plus, ChevronRight, Activity, Camera, Heart, Scan as ScanIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -17,23 +18,39 @@ const Dashboard: React.FC = () => {
     const reportsQuery = query(
       collection(db, 'reports'),
       where('user_id', '==', user.uid),
-      orderBy('created_at', 'desc'),
-      limit(3)
+      limit(10) // Get a few more to sort in memory
     );
 
     const medsQuery = query(
       collection(db, 'medicines'),
       where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc'),
-      limit(5)
+      limit(10) // Get a few more to sort in memory
     );
 
     const unsubReports = onSnapshot(reportsQuery, (snapshot) => {
-      setRecentReports(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Sort in memory to avoid needing a composite index
+      docs.sort((a: any, b: any) => {
+        const timeA = a.created_at?.toMillis?.() || a.created_at?.seconds || 0;
+        const timeB = b.created_at?.toMillis?.() || b.created_at?.seconds || 0;
+        return timeB - timeA;
+      });
+      setRecentReports(docs.slice(0, 3));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'reports');
     });
 
     const unsubMeds = onSnapshot(medsQuery, (snapshot) => {
-      setMedicines(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Sort in memory to avoid needing a composite index
+      docs.sort((a: any, b: any) => {
+        const timeA = a.createdAt?.toMillis?.() || a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.toMillis?.() || b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
+      setMedicines(docs.slice(0, 5));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'medicines');
     });
 
     return () => {
@@ -85,17 +102,17 @@ const Dashboard: React.FC = () => {
 
       {/* Main Action Buttons */}
       <section className="grid grid-cols-2 gap-4">
-        <Link to="/scan" className="card flex flex-col items-center justify-center gap-3 py-6 hover:bg-secondary/30 transition-colors group">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-            <Camera size={24} />
+        <Link to="/scan?type=prescription" className="card flex flex-col items-center justify-center gap-3 py-6 hover:bg-secondary/30 transition-colors group border-emerald-100 bg-emerald-50/30">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform shadow-sm">
+            <Pill size={24} />
           </div>
           <span className="text-sm font-bold text-slate-700 text-center">Scan Prescription</span>
         </Link>
-        <Link to="/scan" className="card flex flex-col items-center justify-center gap-3 py-6 hover:bg-secondary/30 transition-colors group">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-            <Plus size={24} />
+        <Link to="/scan?type=lab_report" className="card flex flex-col items-center justify-center gap-3 py-6 hover:bg-secondary/30 transition-colors group border-blue-100 bg-blue-50/30">
+          <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform shadow-sm">
+            <Activity size={24} />
           </div>
-          <span className="text-sm font-bold text-slate-700 text-center">Upload Report</span>
+          <span className="text-sm font-bold text-slate-700 text-center">Scan Lab Report</span>
         </Link>
         <Link to="/reports" className="card flex flex-col items-center justify-center gap-3 py-6 hover:bg-secondary/30 transition-colors group">
           <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
@@ -114,56 +131,80 @@ const Dashboard: React.FC = () => {
       {/* Latest Report Analysis */}
       {latestReport && (
         <section className="flex flex-col gap-4">
-          <h3 className="text-lg font-bold text-slate-800">Latest Analysis</h3>
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-bold text-slate-800">Medical Insights</h3>
+            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">AI Powered</span>
+          </div>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="card bg-primary text-white border-none p-6 relative overflow-hidden"
+            className="card bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none p-6 relative overflow-hidden shadow-xl"
           >
             <div className="relative z-10">
-              <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">Recent Scan</span>
-              <h4 className="text-xl font-bold mt-1 capitalize">{latestReport.report_type?.replace('_', ' ') || latestReport.type?.replace('_', ' ')}</h4>
-              <p className="text-sm mt-2 line-clamp-2 opacity-90">
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`p-2 rounded-lg ${getReportColor(latestReport.report_type || latestReport.type)} bg-opacity-20`}>
+                  {getReportIcon(latestReport.report_type || latestReport.type)}
+                </div>
+                <h4 className="text-lg font-bold capitalize">{latestReport.report_type?.replace('_', ' ') || latestReport.type?.replace('_', ' ')}</h4>
+              </div>
+              <p className="text-sm leading-relaxed opacity-90 font-medium">
                 {latestReport.summary || "No summary available for this report."}
               </p>
-              <Link to="/reports" className="inline-flex items-center gap-2 text-sm font-bold mt-4 bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition-colors">
-                View Details <ChevronRight size={16} />
+              
+              {latestReport.main_findings && latestReport.main_findings.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {latestReport.main_findings.slice(0, 2).map((finding: string, i: number) => (
+                    <span key={i} className="text-[10px] bg-white/10 border border-white/20 px-2 py-1 rounded-md">
+                      {finding}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <Link to={`/reports`} className="inline-flex items-center gap-2 text-xs font-bold mt-6 text-primary-foreground/80 hover:text-white transition-colors">
+                View Full Analysis <ChevronRight size={14} />
               </Link>
             </div>
-            <FileText className="absolute -right-4 -bottom-4 text-white/10" size={120} />
+            <Activity className="absolute -right-8 -bottom-8 text-white/5" size={160} />
           </motion.div>
         </section>
       )}
 
-      {/* Medicine Reminders */}
+      {/* Medicine Extraction Dashboard */}
       <section className="flex flex-col gap-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-bold text-slate-800">Medicine Reminders</h3>
-          <span className="text-primary text-xs font-bold bg-secondary px-2 py-1 rounded-md">Today</span>
+          <h3 className="text-lg font-bold text-slate-800">Medicine Guide</h3>
+          <Link to="/medicines" className="text-primary text-sm font-bold">Manage All</Link>
         </div>
         {medicines.length === 0 ? (
-          <div className="card text-center py-8 border-dashed">
-            <Pill className="mx-auto text-slate-300 mb-2" size={40} />
-            <p className="text-slate-500 text-sm">No active medicines found</p>
+          <div className="card text-center py-10 border-dashed bg-slate-50/50">
+            <Pill className="mx-auto text-slate-300 mb-3" size={48} />
+            <p className="text-slate-500 text-sm font-medium">No medicines extracted yet</p>
+            <p className="text-slate-400 text-xs mt-1">Scan a prescription to get started</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {medicines.map((med) => (
               <motion.div 
                 key={med.id}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="card flex items-center gap-4 hover:shadow-md transition-shadow"
+                className="card flex items-center gap-4 hover:shadow-md transition-all border-l-4 border-l-blue-500 py-4"
               >
-                <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner">
                   <Pill size={24} />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-bold text-slate-800">{med.name}</h4>
-                  <p className="text-xs text-slate-500">{med.dosage} • {med.frequency}</p>
-                </div>
-                <div className="w-8 h-8 rounded-full border-2 border-slate-100 flex items-center justify-center text-slate-300">
-                  <Plus size={16} />
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-bold text-slate-800 leading-tight">{med.name}</h4>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{med.timing || med.frequency}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 font-medium">{med.dosage}</p>
+                  {med.purpose && (
+                    <p className="text-[10px] text-blue-500 mt-1 font-bold bg-blue-50 inline-block px-2 py-0.5 rounded">
+                      {med.purpose}
+                    </p>
+                  )}
                 </div>
               </motion.div>
             ))}

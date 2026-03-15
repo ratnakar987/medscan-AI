@@ -1,13 +1,15 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Camera, Upload, X, Loader2, CheckCircle2, FileText } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Camera, Upload, X, Loader2, CheckCircle2, FileText, Pill, Activity } from 'lucide-react';
 import { analyzeMedicalImage } from '../services/geminiService';
 import { storage, db } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, writeBatch, doc as firestoreDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import CameraScanner from '../components/CameraScanner';
+import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
+import { compressImage } from '../utils/imageCompression';
 
 const Scan: React.FC = () => {
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
@@ -18,6 +20,32 @@ const Scan: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const docType = searchParams.get('type');
+
+  const getTitle = () => {
+    switch (docType) {
+      case 'prescription': return 'Scan Prescription';
+      case 'lab_report': return 'Scan Lab Report';
+      default: return 'Scan Document';
+    }
+  };
+
+  const getIcon = () => {
+    switch (docType) {
+      case 'prescription': return <Pill size={48} />;
+      case 'lab_report': return <Activity size={48} />;
+      default: return <FileText size={48} />;
+    }
+  };
+
+  const getAccentColor = () => {
+    switch (docType) {
+      case 'prescription': return 'text-emerald-500';
+      case 'lab_report': return 'text-blue-500';
+      default: return 'text-primary';
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,41 +69,81 @@ const Scan: React.FC = () => {
     if (!imageBlob || !user) return;
 
     setLoading(true);
-    setStatus('Uploading document...');
+    setStatus('Optimizing document...');
     
     try {
-      // 1. Upload to Firebase Storage directly from client
-      // This is more reliable on Vercel (no body size limits)
+      // 1. Ultra-Aggressive Compression for maximum speed
+      let finalBlob = imageBlob;
+      if (imageBlob.type.startsWith('image/')) {
+        try {
+          // 700px is the "sweet spot" for speed vs OCR accuracy
+          // Lowering quality to 0.3 significantly reduces payload size
+          finalBlob = await compressImage(imageBlob, 700, 700, 0.3);
+          console.log(`Ultra-Optimized: ${(imageBlob.size / 1024).toFixed(1)}KB -> ${(finalBlob.size / 1024).toFixed(1)}KB`);
+        } catch (e) {
+          console.warn("Compression failed", e);
+        }
+      }
+
       const reportId = Math.random().toString(36).substring(2, 15);
       let extension = 'jpg';
-      if (imageBlob.type === 'application/pdf') {
+      if (finalBlob.type === 'application/pdf') {
         extension = 'pdf';
-      } else if (imageBlob.type.startsWith('image/')) {
-        extension = imageBlob.type.split('/')[1] || 'jpg';
+      } else if (finalBlob.type.startsWith('image/')) {
+        extension = finalBlob.type.split('/')[1] || 'jpg';
       }
       
       const storagePath = `medical_reports/${user.uid}/${reportId}.${extension}`;
       const storageRef = ref(storage, storagePath);
       
-      await uploadBytes(storageRef, imageBlob);
-      const imageUrl = await getDownloadURL(storageRef);
-      
-      setStatus('Analyzing with AI...');
+      setStatus('Uploading to Cloud...');
 
-      // 2. Convert to base64 for Gemini (Frontend call)
+      // 2. Start all processes in parallel
+      // Convert to base64 for Gemini
       const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(imageBlob);
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => {
+          setStatus('Performing OCR & Vision Analysis...');
+          resolve(reader.result as string);
+        };
+        reader.onerror = () => reject(new Error("Local read failed"));
+        reader.readAsDataURL(finalBlob);
       });
-      const base64Image = await base64Promise;
 
-      // 3. Call Gemini API
-      const analysis = await analyzeMedicalImage(base64Image, imageBlob.type);
+      // Start the upload immediately
+      const uploadPromise = uploadBytes(storageRef, finalBlob).then(() => {
+        return getDownloadURL(storageRef);
+      });
+      
+      // Start the AI analysis as soon as base64 is ready
+      const analysisPromise = base64Promise.then(async (base64) => {
+        const result = await analyzeMedicalImage(base64, finalBlob.type);
+        setStatus('Extracting Medicines & Lab Data...');
+        return result;
+      });
 
-      setStatus('Saving results...');
+      // 3. Wait for AI analysis first as it's the "long pole"
+      const [analysis, imageUrl] = await Promise.all([
+        analysisPromise,
+        uploadPromise
+      ]);
 
-      // 4. Save to Firestore
+      if (!analysis || typeof analysis !== 'object' || Array.isArray(analysis)) {
+        throw new Error("The AI was unable to interpret this document. Please ensure the image is clear and contains medical information.");
+      }
+
+      // Check for essential fields or provide defaults
+      if (!analysis.report_type && !analysis.summary && !analysis.ocr_text) {
+        throw new Error("The AI returned an empty analysis. This usually happens if the image is too blurry or doesn't look like a medical document.");
+      }
+      
+      if (!imageUrl) {
+        throw new Error("Failed to upload the document image. Please check your connection.");
+      }
+
+      setStatus('Finalizing Medical Record...');
+
+      // 3. Save to Firestore
       const validTypes = ['prescription', 'lab_report', 'imaging_report', 'ecg', 'discharge_summary', 'raw_medical_image', 'other'];
       const reportType = validTypes.includes(analysis.report_type) ? analysis.report_type : 'other';
 
@@ -101,44 +169,30 @@ const Scan: React.FC = () => {
       const reportsCollection = collection(db, 'reports');
       const reportRef = await addDoc(reportsCollection, reportData);
 
-      // 5. Save medicines to dedicated collection if applicable
+      // 4. Save medicines (Non-blocking for the user redirection)
       if (analysis.medicine_list && Array.isArray(analysis.medicine_list) && analysis.medicine_list.length > 0) {
-        const { writeBatch, doc: firestoreDoc } = await import('firebase/firestore');
         const batch = writeBatch(db);
-        
         for (const med of analysis.medicine_list) {
           const medRef = firestoreDoc(collection(db, 'medicines'));
           batch.set(medRef, {
             reportId: reportRef.id,
             userId: user.uid,
-            medicine_name: med.name,
-            name: med.name,
-            dosage: med.dosage,
-            frequency: med.timing || '',
-            use: med.purpose,
-            purpose: med.purpose,
-            side_effects: med.side_effects || 'Consult your doctor for potential side effects.',
+            name: med.name || 'Unknown Medicine',
+            dosage: med.dosage || '',
+            frequency: med.timing || med.frequency || '',
+            purpose: med.purpose || '',
+            side_effects: med.side_effects || '',
             createdAt: serverTimestamp(),
           });
         }
-        await batch.commit();
+        batch.commit().catch(err => console.error("Medicine batch failed", err));
       }
       
-      const typeLabels: Record<string, string> = {
-        'prescription': 'Prescription',
-        'lab_report': 'Lab report',
-        'imaging_report': 'Imaging report',
-        'ecg': 'ECG report',
-        'discharge_summary': 'Discharge summary',
-        'raw_medical_image': 'Medical image',
-        'other': 'Medical report'
-      };
-      const typeLabel = typeLabels[analysis.report_type] || 'Medical report';
-      setStatus(`${typeLabel} analyzed successfully!`);
-      setTimeout(() => navigate('/reports'), 1500);
+      setStatus('Done!');
+      navigate('/reports');
     } catch (err: any) {
-      console.error(err);
-      setStatus(`Error: ${err.message || 'Please try again.'}`);
+      console.error("Scanning error:", err);
+      setStatus(`Failed: ${err.message || 'Please try again'}`);
       setLoading(false);
     }
   };
@@ -146,8 +200,8 @@ const Scan: React.FC = () => {
   return (
     <div className="flex flex-col gap-6 min-h-[80vh]">
       <div className="text-center">
-        <h2 className="text-2xl font-bold">Scan Document</h2>
-        <p className="text-slate-500">Capture your prescription, lab report, CT/MRI, or ECG</p>
+        <h2 className="text-2xl font-bold">{getTitle()}</h2>
+        <p className="text-slate-500">Capture your {docType?.replace('_', ' ') || 'medical document'} for instant analysis</p>
       </div>
 
       <div 
@@ -176,8 +230,8 @@ const Scan: React.FC = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-6 p-8">
-            <div className="w-24 h-24 bg-white rounded-full shadow-sm flex items-center justify-center text-primary">
-              <FileText size={48} />
+            <div className={`w-24 h-24 bg-white rounded-full shadow-sm flex items-center justify-center ${getAccentColor()}`}>
+              {getIcon()}
             </div>
             <div className="text-center">
               <p className="text-slate-600 font-medium">No document selected</p>

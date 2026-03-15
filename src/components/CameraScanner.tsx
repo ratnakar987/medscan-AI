@@ -100,7 +100,7 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onCapture, onClose }) => 
         canvas.height = video.videoHeight || video.clientHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        const imageData = canvas.toDataURL('image/jpeg', 0.5);
         setCapturedImage(imageData);
         
         stopStream();
@@ -119,7 +119,7 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onCapture, onClose }) => 
         if (blob) {
           onCapture(blob);
         }
-      }, 'image/jpeg', 0.8);
+      }, 'image/jpeg', 0.5);
     }
   };
 

@@ -1,35 +1,28 @@
-import { GoogleGenAI, ThinkingLevel } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel, HarmCategory, HarmBlockThreshold } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
-export const analyzeMedicalImage = async (base64Image: string, mimeType: string) => {
+export const analyzeMedicalImage = async (base64Image: string, mimeType: string, retries = 2) => {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error("Gemini API Key is missing. Please set the GEMINI_API_KEY environment variable in your deployment settings.");
   }
+  
   const model = "gemini-3-flash-preview";
   
   const prompt = `
-    Analyze this medical image or document. It could be a text-based report (like a prescription or lab result) or a raw medical image (like a CT scan slice, MRI, X-ray, or ECG tracing).
+    You are a Medical Document Analysis Engine. Follow this pipeline:
+    1. OCR: Extract all raw text from the image accurately.
+    2. VISION: Identify the type of document (Prescription, Lab Report, ECG, etc.) and its visual state.
+    3. NLP: Analyze the extracted text and visual context to interpret medical findings.
+    4. EXTRACTION: Structure the data into the following JSON format.
     
-    1. If it's a text document: Extract all text (OCR) and classify it.
-    2. If it's a raw medical image (e.g., a CT scan of a body part): Describe what is visible, identify the body part, and provide general medical insights based on the visual features.
-    3. Classify the document/image type (e.g., "prescription", "lab_report", "imaging_report", "ecg", "discharge_summary", "raw_medical_image", "other").
-    4. Provide a concise summary (2-3 sentences max) for a patient. Use simple, non-medical language.
-    5. Highlight 3-5 "main_findings" as bullet points. If there are complex medical terms, explain them briefly in brackets.
-    6. If it's an imaging report or raw medical image: Extract or describe "impressions" and "key_observations".
-    7. If it's an ECG: Extract "heart_rate", "rhythm", and "interpretation".
-    8. If prescription: Extract medicines (name, dosage, timing, purpose, side effects).
-    9. If lab report: Extract results (parameter, value, range, abnormal status, explanation).
-    
-    IMPORTANT: Always provide a "summary" and "ai_analysis" (detailed interpretation) even if the image contains no text. If you are unsure about specific details, provide general guidance and emphasize the need for professional medical consultation.
-
-    Return JSON:
+    JSON ONLY:
     {
-      "report_type": "string",
-      "summary": "...",
-      "main_findings": ["...", "..."],
-      "ai_analysis": "...",
-      "ocr_text": "...",
+      "report_type": "prescription|lab_report|imaging_report|ecg|discharge_summary|raw_medical_image|other",
+      "summary": "2-sentence patient-friendly summary",
+      "main_findings": ["finding 1", "finding 2"],
+      "ai_analysis": "detailed medical interpretation",
+      "ocr_text": "full extracted raw text",
       "medicine_list": [{"name": "...", "dosage": "...", "timing": "...", "purpose": "...", "side_effects": "..."}],
       "lab_results": [{"parameter": "...", "value": "...", "reference_range": "...", "is_abnormal": bool, "explanation": "..."}],
       "imaging_details": {"impressions": "...", "observations": "..."},
@@ -37,34 +30,76 @@ export const analyzeMedicalImage = async (base64Image: string, mimeType: string)
     }
   `;
 
-  const response = await ai.models.generateContent({
-    model,
-    contents: [
-      {
-        parts: [
-          { text: prompt },
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: [
           {
-            inlineData: {
-              data: base64Image.includes(',') ? base64Image.split(',')[1] : base64Image,
-              mimeType
-            }
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  data: base64Image.includes(',') ? base64Image.split(',')[1] : base64Image,
+                  mimeType
+                }
+              }
+            ]
           }
-        ]
-      }
-    ],
-    config: {
-      responseMimeType: "application/json",
-      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
-    }
-  });
+        ],
+        config: {
+          responseMimeType: "application/json",
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          safetySettings: [
+            {
+              category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+          ],
+        }
+      });
 
-  const text = response.text;
-  if (!text) throw new Error("No response from AI model");
-  
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    console.error("Failed to parse AI response:", text);
-    throw new Error("Failed to interpret the medical document. Please try a clearer image.");
+      const text = response.text;
+      if (!text) {
+        if (attempt < retries) continue;
+        throw new Error("No response from AI model");
+      }
+      
+      try {
+        // More robust JSON extraction: find the first { and last }
+        const firstBrace = text.indexOf('{');
+        const lastBrace = text.lastIndexOf('}');
+        
+        if (firstBrace === -1 || lastBrace === -1 || lastBrace < firstBrace) {
+          throw new Error("No valid JSON object found in response");
+        }
+        
+        const jsonContent = text.substring(firstBrace, lastBrace + 1);
+        return JSON.parse(jsonContent);
+      } catch (e) {
+        console.error("Failed to parse AI response:", text);
+        if (attempt < retries) continue;
+        throw new Error("Failed to interpret the medical document. Please try a clearer image.");
+      }
+    } catch (error: any) {
+      console.error(`Gemini API attempt ${attempt + 1} failed:`, error);
+      if (attempt === retries) {
+        throw new Error(error.message || "AI Analysis failed. Please try again.");
+      }
+      // Wait less before retrying
+      await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+    }
   }
 };

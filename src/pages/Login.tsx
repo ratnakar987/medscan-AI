@@ -25,7 +25,7 @@ const Login: React.FC = () => {
   useEffect(() => {
     if (loginMethod === 'phone' && !window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
+        size: 'normal',
         callback: () => {
           // reCAPTCHA solved, allow signInWithPhoneNumber.
         }

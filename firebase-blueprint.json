@@ -5,71 +5,56 @@
       "description": "User profile information",
       "type": "object",
       "properties": {
-        "user_id": { "type": "string" },
-        "name": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "phone": { "type": "string" },
-        "age": { "type": "integer" },
-        "gender": { "type": "string", "enum": ["male", "female", "other"] },
-        "created_at": { "type": "string", "format": "date-time" }
+        "uid": { "type": "string", "description": "Unique user ID from Firebase Auth" },
+        "email": { "type": "string", "format": "email", "description": "User's email address" },
+        "displayName": { "type": "string", "description": "User's display name" },
+        "photoURL": { "type": "string", "description": "URL to user's profile picture" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the profile was created" }
       },
-      "required": ["user_id", "email", "name"]
+      "required": ["uid", "email"]
     },
     "Report": {
-      "title": "Report",
-      "description": "Medical report or prescription scan",
+      "title": "Medical Report",
+      "description": "A scanned medical report and its AI analysis",
       "type": "object",
       "properties": {
-        "report_id": { "type": "string" },
-        "user_id": { "type": "string" },
-        "report_type": { "type": "string", "enum": ["prescription", "lab_report", "imaging_report", "ecg", "discharge_summary", "raw_medical_image", "other"] },
-        "type": { "type": "string" },
-        "imageUrl": { "type": "string" },
-        "image_url": { "type": "string" },
-        "analysis": { "type": "string" },
-        "ocr_text": { "type": "string" },
-        "summary": { "type": "string" },
-        "ai_analysis": { "type": "string" },
-        "medicine_list": { "type": "array" },
-        "lab_results": { "type": "array" },
-        "imaging_details": { "type": "object" },
-        "ecg_details": { "type": "object" },
-        "created_at": { "type": "string", "format": "date-time" }
+        "report_id": { "type": "string", "description": "Unique report ID" },
+        "user_id": { "type": "string", "description": "Owner's user ID" },
+        "image_url": { "type": "string", "description": "URL to the stored image" },
+        "analysis": { "type": "string", "description": "Full AI analysis JSON string" },
+        "summary": { "type": "string", "description": "Brief summary of the report" },
+        "status": { "type": "string", "enum": ["pending", "completed", "error"], "description": "Processing status" },
+        "created_at": { "type": "string", "format": "date-time", "description": "When the report was scanned" }
       },
-      "required": ["report_id", "user_id", "report_type", "imageUrl"]
+      "required": ["report_id", "user_id", "image_url"]
     },
     "Medicine": {
       "title": "Medicine",
-      "description": "Extracted medicine details",
+      "description": "A medicine extracted from a report",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "reportId": { "type": "string" },
-        "userId": { "type": "string" },
-        "medicine_name": { "type": "string" },
-        "name": { "type": "string" },
-        "dosage": { "type": "string" },
-        "frequency": { "type": "string" },
-        "use": { "type": "string" },
-        "purpose": { "type": "string" },
-        "side_effects": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "userId": { "type": "string", "description": "Owner's user ID" },
+        "reportId": { "type": "string", "description": "Source report ID" },
+        "name": { "type": "string", "description": "Medicine name" },
+        "dosage": { "type": "string", "description": "Dosage instructions" },
+        "frequency": { "type": "string", "description": "Frequency of intake" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the medicine was added" }
       },
-      "required": ["reportId", "userId", "medicine_name"]
+      "required": ["userId", "name"]
     }
   },
   "firestore": {
-    "/users/{userId}": {
+    "/users/{uid}": {
       "schema": "User",
       "description": "User profiles"
     },
     "/reports/{reportId}": {
       "schema": "Report",
-      "description": "Scanned reports"
+      "description": "Medical reports collection"
     },
     "/medicines/{medicineId}": {
       "schema": "Medicine",
-      "description": "Extracted medicines"
+      "description": "Medicines collection"
     }
   }
 }

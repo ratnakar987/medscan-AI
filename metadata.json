@@ -1,5 +1,7 @@
 {
   "name": "MedScan AI",
   "description": "Scan prescriptions and medical reports to understand medicines and test results using AI.",
-  "requestFramePermissions": ["camera"]
+  "requestFramePermissions": [
+    "camera"
+  ]
 }

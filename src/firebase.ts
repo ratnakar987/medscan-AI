@@ -1,38 +1,36 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../firebase-applet-config.json';
+
+console.log("Initializing Firebase with Project ID:", firebaseConfig.projectId);
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 // Use initializeFirestore with robust settings for restricted environments
+// We force long polling to ensure compatibility with the AI Studio iframe and various proxies
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
-  experimentalAutoDetectLongPolling: false, // Force it
-}, firebaseConfig.firestoreDatabaseId);
+  experimentalAutoDetectLongPolling: false,
+  ignoreUndefinedProperties: true,
+  useFetchStreams: false,
+  host: 'firestore.googleapis.com',
+  ssl: true,
+} as any, firebaseConfig.firestoreDatabaseId);
 
 export const storage = getStorage(app);
 
-// Connection test with a longer timeout or retry logic
-async function testConnection() {
-  try {
-    // Try to get a document from the server to verify connection
-    // We use a non-existent doc just to check connectivity
-    await getDocFromServer(doc(db, '_connection_test_', 'ping'));
-    console.log("Firestore connection verified.");
-  } catch (error: any) {
-    if (error?.message?.includes('the client is offline') || error?.code === 'unavailable') {
-      console.warn("Firestore is currently offline or unreachable. This may be due to network restrictions in the preview environment.");
-      console.warn("Retrying connection in 5 seconds...");
-      setTimeout(testConnection, 5000);
-    } else {
-      // Other errors (like permission denied) actually mean we ARE connected
-      console.log("Firestore connection check completed (Response received).");
-    }
+// Manually set retry times on the storage instance if the functions are not exported
+// In some versions of the modular SDK, these might be internal or named differently
+try {
+  // @ts-ignore - Accessing internal properties as a fallback if setMaxUploadRetryTime is missing
+  if (storage && (storage as any)._setMaxUploadRetryTime) {
+    (storage as any)._setMaxUploadRetryTime(120000);
   }
+} catch (e) {
+  console.warn("Could not set custom storage retry times", e);
 }
-testConnection();
 
 export default app;

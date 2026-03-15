@@ -16,12 +16,19 @@ const Medicines: React.FC = () => {
 
     const q = query(
       collection(db, 'medicines'),
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc')
+      where('userId', '==', user.uid)
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
       const meds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+      
+      // Sort in memory to avoid needing a composite index
+      meds.sort((a: any, b: any) => {
+        const timeA = a.createdAt?.toMillis?.() || a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.toMillis?.() || b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
+
       // Deduplicate by name
       const uniqueMeds = meds.reduce((acc: any[], current: any) => {
         const x = acc.find(item => item.medicine_name.toLowerCase() === current.medicine_name.toLowerCase());

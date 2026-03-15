@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { FileText, ChevronRight, Search, Filter, Calendar, Trash2, Download, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import InterpretationView from '../components/InterpretationView';
+import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
 
 const Reports: React.FC = () => {
   const { user } = useAuth();
@@ -18,12 +19,20 @@ const Reports: React.FC = () => {
 
     const q = query(
       collection(db, 'reports'),
-      where('user_id', '==', user.uid),
-      orderBy('created_at', 'desc')
+      where('user_id', '==', user.uid)
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
-      setReports(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Sort in memory to avoid needing a composite index
+      docs.sort((a: any, b: any) => {
+        const timeA = a.created_at?.toMillis?.() || a.created_at?.seconds || 0;
+        const timeB = b.created_at?.toMillis?.() || b.created_at?.seconds || 0;
+        return timeB - timeA;
+      });
+      setReports(docs);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'reports');
     });
 
     return unsub;
