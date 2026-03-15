@@ -19,12 +19,14 @@ export const analyzeMedicalImage = async (base64Image: string, mimeType: string,
     JSON ONLY:
     {
       "report_type": "prescription|lab_report|imaging_report|ecg|discharge_summary|raw_medical_image|other",
+      "overall_health_status": "Good|Attention Needed|Critical",
+      "urgency_level": 1-5,
       "summary": "2-sentence patient-friendly summary",
       "main_findings": ["finding 1", "finding 2"],
       "ai_analysis": "detailed medical interpretation",
       "ocr_text": "full extracted raw text",
-      "medicine_list": [{"name": "...", "dosage": "...", "timing": "...", "purpose": "...", "side_effects": "..."}],
-      "lab_results": [{"parameter": "...", "value": "...", "reference_range": "...", "is_abnormal": bool, "explanation": "..."}],
+      "medicine_list": [{"name": "...", "dosage": "...", "timing": "...", "purpose": "...", "simple_explanation": "friendly description of what this med does", "side_effects": "..."}],
+      "lab_results": [{"parameter": "...", "value": "...", "unit": "...", "min_ref": number|null, "max_ref": number|null, "reference_range": "...", "status": "Low|Normal|High", "is_abnormal": bool, "explanation": "..."}],
       "imaging_details": {"impressions": "...", "observations": "..."},
       "ecg_details": {"heart_rate": "...", "rhythm": "...", "interpretation": "..."}
     }

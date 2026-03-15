@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Camera, Upload, X, Loader2, CheckCircle2, FileText, Pill, Activity } from 'lucide-react';
+import { Camera, Upload, X, Loader2, CheckCircle2, FileText, Pill, Activity, AlertCircle, Info, ArrowRight, Heart, Thermometer, ShieldCheck } from 'lucide-react';
 import { analyzeMedicalImage } from '../services/geminiService';
 import { storage, db } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -10,6 +10,76 @@ import { motion, AnimatePresence } from 'motion/react';
 import CameraScanner from '../components/CameraScanner';
 import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
 import { compressImage } from '../utils/imageCompression';
+
+const LabResultVisualizer: React.FC<{ result: any }> = ({ result }) => {
+  const { value, min_ref, max_ref, unit, status, parameter } = result;
+  const numValue = parseFloat(value);
+  
+  // Calculate position percentage if we have refs
+  let position = 50; // Default center
+  if (min_ref !== null && max_ref !== null && !isNaN(numValue)) {
+    const range = max_ref - min_ref;
+    const offset = numValue - min_ref;
+    position = (offset / range) * 100;
+    // Clamp between 0 and 100
+    position = Math.max(0, Math.min(100, position));
+  }
+
+  const getStatusColor = () => {
+    switch (status) {
+      case 'High': return 'text-rose-500';
+      case 'Low': return 'text-amber-500';
+      default: return 'text-emerald-500';
+    }
+  };
+
+  const getBgColor = () => {
+    switch (status) {
+      case 'High': return 'bg-rose-500';
+      case 'Low': return 'bg-amber-500';
+      default: return 'bg-emerald-500';
+    }
+  };
+
+  return (
+    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h4 className="font-bold text-slate-800 text-sm">{parameter}</h4>
+          <p className="text-[10px] text-slate-400 font-medium">Ref: {result.reference_range}</p>
+        </div>
+        <div className="text-right">
+          <span className={`text-lg font-black ${getStatusColor()}`}>{value}</span>
+          <span className="text-[10px] text-slate-400 ml-1 font-bold uppercase">{unit}</span>
+        </div>
+      </div>
+
+      {/* Visual Range Bar */}
+      <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
+        {/* Normal Range Highlight */}
+        <div className="absolute inset-y-0 left-[25%] right-[25%] bg-emerald-100/50"></div>
+        {/* Current Value Indicator */}
+        <motion.div 
+          initial={{ left: '50%' }}
+          animate={{ left: `${position}%` }}
+          className={`absolute top-0 w-2 h-full ${getBgColor()} shadow-[0_0_8px_rgba(0,0,0,0.2)] z-10`}
+        ></motion.div>
+      </div>
+
+      <div className="flex justify-between text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
+        <span>Low</span>
+        <span>Normal</span>
+        <span>High</span>
+      </div>
+
+      {result.explanation && (
+        <p className="text-[10px] text-slate-500 mt-3 leading-tight bg-slate-50 p-2 rounded-lg border border-slate-100 italic">
+          "{result.explanation}"
+        </p>
+      )}
+    </div>
+  );
+};
 
 const Scan: React.FC = () => {
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
@@ -23,6 +93,14 @@ const Scan: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const docType = searchParams.get('type');
+
+  const getStatusTheme = (status: string) => {
+    switch (status) {
+      case 'Critical': return { bg: 'bg-rose-600', text: 'text-white', icon: <AlertCircle size={24} /> };
+      case 'Attention Needed': return { bg: 'bg-amber-500', text: 'text-white', icon: <Info size={24} /> };
+      default: return { bg: 'bg-emerald-600', text: 'text-white', icon: <ShieldCheck size={24} /> };
+    }
+  };
 
   const getTitle = () => {
     switch (docType) {
@@ -215,20 +293,90 @@ const Scan: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col gap-6"
           >
-            {/* Summary Card */}
-            <div className="card bg-slate-900 text-white border-none p-6 shadow-xl">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-primary/20 rounded-lg text-primary">
-                  <Activity size={20} />
+            {/* Health Status Header */}
+            <div className={`card ${getStatusTheme(analysisResult.overall_health_status).bg} ${getStatusTheme(analysisResult.overall_health_status).text} border-none p-6 shadow-xl relative overflow-hidden`}>
+              <div className="relative z-10 flex items-center gap-4">
+                <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
+                  {getStatusTheme(analysisResult.overall_health_status).icon}
                 </div>
-                <h3 className="font-bold text-lg">AI Summary</h3>
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest opacity-80">Health Status</h3>
+                  <p className="text-2xl font-black">{analysisResult.overall_health_status || 'Analyzed'}</p>
+                </div>
+                {analysisResult.urgency_level && (
+                  <div className="ml-auto bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-white/30">
+                    Urgency: {analysisResult.urgency_level}/5
+                  </div>
+                )}
               </div>
-              <p className="text-slate-300 leading-relaxed">
+              <Activity className="absolute -right-8 -bottom-8 text-white/5" size={160} />
+            </div>
+
+            {/* AI Summary */}
+            <div className="card p-6 bg-white border-slate-100 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                  <Heart size={20} />
+                </div>
+                <h3 className="font-bold text-slate-800">Doctor's Summary</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed font-medium">
                 {analysisResult.summary}
               </p>
             </div>
 
-            {/* Main Findings */}
+            {/* Lab Results Visualization */}
+            {analysisResult.lab_results && analysisResult.lab_results.length > 0 && (
+              <div className="flex flex-col gap-4">
+                <h3 className="text-lg font-bold text-slate-800 px-1">Lab Analysis</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  {analysisResult.lab_results.map((result: any, i: number) => (
+                    <LabResultVisualizer key={i} result={result} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Prescription Guide */}
+            {analysisResult.medicine_list && analysisResult.medicine_list.length > 0 && (
+              <div className="flex flex-col gap-4">
+                <h3 className="text-lg font-bold text-slate-800 px-1">Prescription Guide</h3>
+                <div className="space-y-4">
+                  {analysisResult.medicine_list.map((med: any, i: number) => (
+                    <div key={i} className="card p-5 border-l-4 border-l-blue-500 bg-blue-50/20">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                            <Pill size={20} />
+                          </div>
+                          <h4 className="font-bold text-slate-800">{med.name}</h4>
+                        </div>
+                        <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-1 rounded-md uppercase">{med.timing}</span>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-2">
+                          <div className="mt-1 text-blue-500"><Info size={14} /></div>
+                          <p className="text-xs text-slate-600 font-medium">
+                            <span className="font-bold text-slate-800">Why: </span>
+                            {med.simple_explanation || med.purpose}
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <div className="mt-1 text-emerald-500"><Thermometer size={14} /></div>
+                          <p className="text-xs text-slate-600 font-medium">
+                            <span className="font-bold text-slate-800">Dosage: </span>
+                            {med.dosage}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Key Findings */}
             <div className="card p-6">
               <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <CheckCircle2 size={20} className="text-emerald-500" />
@@ -244,34 +392,12 @@ const Scan: React.FC = () => {
               </ul>
             </div>
 
-            {/* Medicines if any */}
-            {analysisResult.medicine_list && analysisResult.medicine_list.length > 0 && (
-              <div className="card p-6 border-blue-100 bg-blue-50/30">
-                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <Pill size={20} className="text-blue-500" />
-                  Medicines Extracted
-                </h3>
-                <div className="space-y-3">
-                  {analysisResult.medicine_list.map((med: any, i: number) => (
-                    <div key={i} className="bg-white p-4 rounded-2xl shadow-sm border border-blue-100">
-                      <h4 className="font-bold text-slate-800">{med.name}</h4>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded-md">{med.dosage}</span>
-                        <span className="text-[10px] font-bold bg-slate-50 text-slate-500 px-2 py-1 rounded-md">{med.timing}</span>
-                      </div>
-                      {med.purpose && <p className="text-xs text-slate-500 mt-2">{med.purpose}</p>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className="flex flex-col gap-3 mt-4">
               <button 
                 onClick={() => { setAnalysisResult(null); setImageBlob(null); setPreviewUrl(null); }}
-                className="btn-primary py-4"
+                className="btn-primary py-4 flex items-center justify-center gap-2"
               >
-                Scan Another Document
+                Scan Another <ArrowRight size={18} />
               </button>
               <button 
                 onClick={() => navigate('/reports')}
