@@ -2,35 +2,57 @@ import { GoogleGenAI, ThinkingLevel, HarmCategory, HarmBlockThreshold } from "@g
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
-export const analyzeMedicalImage = async (base64Image: string, mimeType: string, retries = 2) => {
+export const analyzeMedicalImages = async (images: { base64: string, mimeType: string }[], retries = 2) => {
   if (!process.env.GEMINI_API_KEY) {
-    throw new Error("Gemini API Key is missing. Please set the GEMINI_API_KEY environment variable in your deployment settings.");
+    throw new Error("Gemini API Key is missing.");
   }
   
   const model = "gemini-3-flash-preview";
   
   const prompt = `
-    You are a Medical Document Analysis Engine. Follow this pipeline:
-    1. OCR: Extract all raw text from the image accurately.
-    2. VISION: Identify the type of document (Prescription, Lab Report, ECG, etc.) and its visual state.
-    3. NLP: Analyze the extracted text and visual context to interpret medical findings.
-    4. EXTRACTION: Structure the data into the following JSON format.
+    You are a Senior Medical Diagnostic Engine. You are provided with one or more medical documents belonging to the same patient.
     
+    TASK:
+    1. Analyze ALL provided documents together.
+    2. Provide a HOLISTIC summary of the patient's health based on all documents.
+    3. Extract key findings from each document.
+    4. GUESS the potential disease or condition based on the symptoms, lab results, and prescriptions found across ALL documents.
+    5. Provide a patient-friendly explanation.
+    6. Suggest specific dietary recommendations (fruits, vegetables, etc.) that help manage or reduce the identified condition, with a short explanation for each.
+
     JSON ONLY:
     {
-      "report_type": "prescription|lab_report|imaging_report|ecg|discharge_summary|raw_medical_image|other",
-      "overall_health_status": "Good|Attention Needed|Critical",
-      "urgency_level": 1-5,
-      "summary": "2-sentence patient-friendly summary",
-      "main_findings": ["finding 1", "finding 2"],
-      "ai_analysis": "detailed medical interpretation",
-      "ocr_text": "full extracted raw text",
-      "medicine_list": [{"name": "...", "dosage": "...", "timing": "...", "purpose": "...", "simple_explanation": "friendly description of what this med does", "side_effects": "..."}],
-      "lab_results": [{"parameter": "...", "value": "...", "unit": "...", "min_ref": number|null, "max_ref": number|null, "reference_range": "...", "status": "Low|Normal|High", "is_abnormal": bool, "explanation": "..."}],
-      "imaging_details": {"impressions": "...", "observations": "..."},
-      "ecg_details": {"heart_rate": "...", "rhythm": "...", "interpretation": "..."}
+      "overall_health_status": "Critical|Attention Needed|Stable|Good",
+      "urgency_level": "Immediate|Within 24h|Routine",
+      "holistic_summary": "Overall summary of the patient's condition across all reports",
+      "potential_diagnosis_guess": "The most likely disease or condition based on findings",
+      "confidence_level": "Low|Medium|High",
+      "easy_explanation": "Simple explanation for the patient",
+      "combined_symptoms": ["symptom 1", "symptom 2"],
+      "dietary_recommendations": [
+        {
+          "food": "Name of fruit/veg/food",
+          "benefit": "Short explanation of why it helps"
+        }
+      ],
+      "reports_breakdown": [
+        {
+          "type": "prescription|lab_report|...",
+          "summary": "summary of this specific doc",
+          "findings": ["finding 1", "finding 2"]
+        }
+      ],
+      "medicine_list": [{"name": "...", "dosage": "...", "timing": "...", "purpose": "...", "simple_explanation": "..."}],
+      "lab_results": [{"parameter": "...", "value": "...", "unit": "...", "min_ref": 0, "max_ref": 0, "status": "Low|Normal|High", "explanation": "..."}]
     }
   `;
+
+  const imageParts = images.map(img => ({
+    inlineData: {
+      data: img.base64.includes(',') ? img.base64.split(',')[1] : img.base64,
+      mimeType: img.mimeType
+    }
+  }));
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -40,12 +62,7 @@ export const analyzeMedicalImage = async (base64Image: string, mimeType: string,
           {
             parts: [
               { text: prompt },
-              {
-                inlineData: {
-                  data: base64Image.includes(',') ? base64Image.split(',')[1] : base64Image,
-                  mimeType
-                }
-              }
+              ...imageParts
             ]
           }
         ],

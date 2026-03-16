@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pill, Activity, AlertCircle, CheckCircle2, Info, FileText, ArrowRight, Stethoscope } from 'lucide-react';
+import { Pill, Activity, AlertCircle, CheckCircle2, Info, FileText, ArrowRight, Stethoscope, Heart } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'motion/react';
 
@@ -9,16 +9,21 @@ interface Medicine {
   timing?: string;
   frequency?: string;
   purpose: string;
+  simple_explanation?: string;
 }
 
 interface LabResult {
   parameter?: string;
   testName?: string;
   value: string;
+  unit?: string;
+  min_ref?: number;
+  max_ref?: number;
   referenceRange?: string;
   interpretation?: string;
   explanation?: string;
   is_abnormal?: boolean;
+  status?: string;
 }
 
 interface ImagingDetails {
@@ -36,6 +41,16 @@ interface InterpretationProps {
   report: {
     type: string;
     summary?: string;
+    easy_explanation?: string;
+    potential_symptoms?: string[];
+    overall_health_status?: string;
+    urgency_level?: string;
+    holistic_summary?: string;
+    potential_diagnosis_guess?: string;
+    confidence_level?: string;
+    combined_symptoms?: string[];
+    dietary_recommendations?: { food: string; benefit: string }[];
+    reports_breakdown?: any[];
     main_findings?: string[];
     ai_analysis?: string;
     medicine_list?: Medicine[];
@@ -57,7 +72,9 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
     console.error("Failed to parse legacy analysis", e);
   }
 
-  const summary = report.summary || legacyAnalysis.summary;
+  const summary = report.holistic_summary || report.summary || legacyAnalysis.holistic_summary || legacyAnalysis.summary;
+  const easyExplanation = report.easy_explanation || legacyAnalysis.easy_explanation;
+  const potentialSymptoms = report.combined_symptoms || report.potential_symptoms || legacyAnalysis.combined_symptoms || legacyAnalysis.potential_symptoms || [];
   const mainFindings = report.main_findings || legacyAnalysis.main_findings || [];
   const medicines = report.medicine_list || legacyAnalysis.medicines || [];
   const labResults = report.lab_results || legacyAnalysis.labResults || [];
@@ -65,9 +82,53 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
   const ecgDetails = report.ecg_details || legacyAnalysis.ecg_details;
   const aiAnalysis = report.ai_analysis;
   const recommendations = legacyAnalysis.recommendations || [];
+  const diagnosisGuess = report.potential_diagnosis_guess || legacyAnalysis.potential_diagnosis_guess;
+  const confidence = report.confidence_level || legacyAnalysis.confidence_level;
+  const breakdown = report.reports_breakdown || legacyAnalysis.reports_breakdown;
+  const healthStatus = report.overall_health_status || legacyAnalysis.overall_health_status || 'Good';
+  const urgency = report.urgency_level || legacyAnalysis.urgency_level;
+  const dietaryRecommendations = report.dietary_recommendations || legacyAnalysis.dietary_recommendations || [];
+
+  const getStatusBg = (status: string) => {
+    switch (status) {
+      case 'Critical': return 'bg-rose-600';
+      case 'Attention Needed': return 'bg-amber-500';
+      default: return 'bg-emerald-600';
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8 py-4">
+      {/* Diagnosis Guess - Prominent */}
+      {diagnosisGuess && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`${getStatusBg(healthStatus)} text-white rounded-3xl p-6 shadow-xl relative overflow-hidden`}
+        >
+          <div className="relative z-10 flex items-center gap-4">
+            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
+              <Stethoscope size={24} />
+            </div>
+            <div>
+              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-80">Potential Diagnosis Guess</h3>
+              <p className="text-2xl font-black">{diagnosisGuess}</p>
+              {urgency && (
+                <p className="text-[10px] font-bold uppercase tracking-tighter mt-1 bg-white/20 inline-block px-2 py-0.5 rounded">
+                  Urgency: {urgency}
+                </p>
+              )}
+            </div>
+            {confidence && (
+              <div className="ml-auto bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-white/30">
+                {confidence}
+              </div>
+            )}
+          </div>
+          <Activity className="absolute -right-8 -bottom-8 text-white/5" size={160} />
+        </motion.div>
+      )}
+
       {/* Summary Section - Clean Utility Style */}
       {(summary || mainFindings.length > 0) && (
         <motion.div 
@@ -88,6 +149,31 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
             </p>
           )}
 
+          {easyExplanation && (
+            <div className="mb-6 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+              <p className="text-sm text-emerald-800 leading-relaxed italic">
+                <span className="font-bold not-italic">Simple Explanation: </span>
+                {easyExplanation}
+              </p>
+            </div>
+          )}
+
+          {potentialSymptoms.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                <AlertCircle size={14} className="text-amber-500" />
+                {report.combined_symptoms ? 'Combined Symptoms' : 'Potential Symptoms'}
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {potentialSymptoms.map((symptom: string, idx: number) => (
+                  <span key={idx} className="text-xs font-medium bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-100">
+                    {symptom}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {mainFindings.length > 0 && (
             <div className="bg-slate-50 rounded-2xl p-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Key Findings</h4>
@@ -102,6 +188,34 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
             </div>
           )}
         </motion.div>
+      )}
+
+      {/* Reports Breakdown */}
+      {breakdown && breakdown.length > 0 && (
+        <div className="flex flex-col gap-4">
+          <h3 className="text-lg font-bold text-slate-800 px-1">Reports Breakdown</h3>
+          <div className="space-y-4">
+            {breakdown.map((report: any, i: number) => (
+              <div key={i} className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                    <FileText size={16} />
+                  </div>
+                  <h4 className="font-bold text-slate-800 capitalize">{report.type.replace('_', ' ')}</h4>
+                </div>
+                <p className="text-xs text-slate-600 mb-3">{report.summary}</p>
+                <ul className="space-y-1">
+                  {report.findings.map((finding: string, j: number) => (
+                    <li key={j} className="text-[11px] text-slate-500 flex items-start gap-2">
+                      <div className="mt-1.5 w-1 h-1 rounded-full bg-primary shrink-0" />
+                      {finding}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Imaging Details Section */}
@@ -230,6 +344,11 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
                     <span className="font-bold not-italic text-slate-400 mr-1">Purpose:</span>
                     {med.purpose}
                   </p>
+                  {med.simple_explanation && (
+                    <p className="text-[11px] text-emerald-600 mt-2 bg-emerald-50/50 p-2 rounded-lg">
+                      <span className="font-bold">Why:</span> {med.simple_explanation}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
@@ -289,6 +408,31 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
                 );
               })}
             </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Dietary Recommendations Section */}
+      {dietaryRecommendations.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-emerald-50/50 rounded-3xl p-6 border border-emerald-100"
+        >
+          <div className="flex items-center gap-2 mb-4 text-emerald-700">
+            <div className="bg-emerald-100 p-2 rounded-xl">
+              <Heart size={20} className="text-emerald-600" />
+            </div>
+            <h3 className="font-bold text-lg">Dietary Recommendations</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {dietaryRecommendations.map((item: any, idx: number) => (
+              <div key={idx} className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm">
+                <h4 className="font-bold text-emerald-800 text-sm mb-1">{item.food}</h4>
+                <p className="text-xs text-slate-600 leading-tight">{item.benefit}</p>
+              </div>
+            ))}
           </div>
         </motion.div>
       )}

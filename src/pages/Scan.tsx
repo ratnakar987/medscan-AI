@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Camera, Upload, X, Loader2, CheckCircle2, FileText, Pill, Activity, AlertCircle, Info, ArrowRight, Heart, Thermometer, ShieldCheck } from 'lucide-react';
-import { analyzeMedicalImage } from '../services/geminiService';
+import { Camera, Upload, X, Loader2, CheckCircle2, FileText, Pill, Activity, AlertCircle, Info, ArrowRight, Heart, Thermometer, ShieldCheck, Stethoscope, Trash2 } from 'lucide-react';
+import { analyzeMedicalImages } from '../services/geminiService';
 import { storage, db } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp, writeBatch, doc as firestoreDoc } from 'firebase/firestore';
@@ -82,8 +82,8 @@ const LabResultVisualizer: React.FC<{ result: any }> = ({ result }) => {
 };
 
 const Scan: React.FC = () => {
-  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageBlobs, setImageBlobs] = useState<Blob[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
@@ -104,9 +104,9 @@ const Scan: React.FC = () => {
 
   const getTitle = () => {
     switch (docType) {
-      case 'prescription': return 'Scan Prescription';
-      case 'lab_report': return 'Scan Lab Report';
-      default: return 'Scan Document';
+      case 'prescription': return 'Scan Prescriptions';
+      case 'lab_report': return 'Scan Lab Reports';
+      default: return 'Scan Documents';
     }
   };
 
@@ -127,144 +127,99 @@ const Scan: React.FC = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageBlob(file);
-      if (file.type === 'application/pdf') {
-        setPreviewUrl('pdf-placeholder');
-      } else {
-        setPreviewUrl(URL.createObjectURL(file));
-      }
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setImageBlobs(prev => [...prev, ...files]);
+      const newPreviews = files.map(file => 
+        file.type === 'application/pdf' ? 'pdf-placeholder' : URL.createObjectURL(file)
+      );
+      setPreviewUrls(prev => [...prev, ...newPreviews]);
     }
   };
 
   const handleCameraCapture = (blob: Blob) => {
-    setImageBlob(blob);
-    setPreviewUrl(URL.createObjectURL(blob));
+    setImageBlobs(prev => [...prev, blob]);
+    setPreviewUrls(prev => [...prev, URL.createObjectURL(blob)]);
     setIsCameraOpen(false);
   };
 
+  const removeImage = (index: number) => {
+    setImageBlobs(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleScan = async () => {
-    if (!imageBlob || !user) return;
+    if (imageBlobs.length === 0 || !user) return;
 
     setLoading(true);
-    setStatus('Optimizing document...');
+    setStatus('Optimizing documents...');
     
     try {
-      // 1. Ultra-Aggressive Compression for maximum speed
-      let finalBlob = imageBlob;
-      if (imageBlob.type.startsWith('image/')) {
-        try {
-          // 700px is the "sweet spot" for speed vs OCR accuracy
-          // Lowering quality to 0.3 significantly reduces payload size
-          finalBlob = await compressImage(imageBlob, 700, 700, 0.3);
-          console.log(`Ultra-Optimized: ${(imageBlob.size / 1024).toFixed(1)}KB -> ${(finalBlob.size / 1024).toFixed(1)}KB`);
-        } catch (e) {
-          console.warn("Compression failed", e);
+      const processedImages = await Promise.all(imageBlobs.map(async (blob) => {
+        let finalBlob = blob;
+        if (blob.type.startsWith('image/')) {
+          try {
+            finalBlob = await compressImage(blob, 700, 700, 0.3);
+          } catch (e) {
+            console.warn("Compression failed", e);
+          }
         }
+        
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(finalBlob);
+        });
+        
+        return { base64, mimeType: finalBlob.type, blob: finalBlob };
+      }));
+
+      setStatus('Holistic AI Analysis...');
+      const analysis = await analyzeMedicalImages(processedImages.map(img => ({ base64: img.base64, mimeType: img.mimeType })));
+
+      if (!analysis) {
+        throw new Error("The AI was unable to interpret these documents.");
       }
 
-      const reportId = Math.random().toString(36).substring(2, 15);
-      let extension = 'jpg';
-      if (finalBlob.type === 'application/pdf') {
-        extension = 'pdf';
-      } else if (finalBlob.type.startsWith('image/')) {
-        extension = finalBlob.type.split('/')[1] || 'jpg';
-      }
-      
-      const storagePath = `medical_reports/${user.uid}/${reportId}.${extension}`;
-      const storageRef = ref(storage, storagePath);
-      
-      setStatus('Uploading to Cloud...');
-
-      // 2. Start all processes in parallel
-      // Convert to base64 for Gemini
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => {
-          setStatus('Performing OCR & Vision Analysis...');
-          resolve(reader.result as string);
-        };
-        reader.onerror = () => reject(new Error("Local read failed"));
-        reader.readAsDataURL(finalBlob);
-      });
-
-      // Start the upload immediately
-      const uploadPromise = uploadBytes(storageRef, finalBlob).then(() => {
-        return getDownloadURL(storageRef);
-      });
-      
-      // Start the AI analysis as soon as base64 is ready
-      const analysisPromise = base64Promise.then(async (base64) => {
-        const result = await analyzeMedicalImage(base64, finalBlob.type);
-        setStatus('Extracting Medicines & Lab Data...');
-        return result;
-      });
-
-      // 3. Wait ONLY for AI analysis to show results immediately
-      // This is the "Speed Optimization": we don't wait for the upload or firestore save to show the answer
-      const analysis = await analysisPromise;
-
-      if (!analysis || typeof analysis !== 'object' || Array.isArray(analysis)) {
-        throw new Error("The AI was unable to interpret this document. Please ensure the image is clear.");
-      }
-
-      // Show results to user immediately
       setAnalysisResult(analysis);
       setLoading(false);
       setStatus('Analysis Complete');
 
-      // 4. Background Persistence (Fire and Forget)
-      // We continue the upload and save in the background so the user doesn't have to wait
+      // Background Persistence
       (async () => {
         try {
-          const imageUrl = await uploadPromise;
-          
-          const validTypes = ['prescription', 'lab_report', 'imaging_report', 'ecg', 'discharge_summary', 'raw_medical_image', 'other'];
-          const reportType = validTypes.includes(analysis.report_type) ? analysis.report_type : 'other';
-
-          const reportData = {
-            user_id: user.uid,
-            report_id: reportId,
-            report_type: reportType,
-            type: reportType,
-            imageUrl: imageUrl,
-            image_url: imageUrl,
-            ocr_text: analysis.ocr_text || '',
-            summary: analysis.summary || '',
-            main_findings: analysis.main_findings || [],
-            ai_analysis: analysis.ai_analysis || '',
-            medicine_list: analysis.medicine_list || [],
-            lab_results: analysis.lab_results || [],
-            imaging_details: analysis.imaging_details || null,
-            ecg_details: analysis.ecg_details || null,
-            analysis: JSON.stringify(analysis),
-            created_at: serverTimestamp(),
-          };
-
+          const batch = writeBatch(db);
           const reportsCollection = collection(db, 'reports');
-          const reportRef = await addDoc(reportsCollection, reportData);
-
-          if (analysis.medicine_list && Array.isArray(analysis.medicine_list) && analysis.medicine_list.length > 0) {
-            const batch = writeBatch(db);
-            for (const med of analysis.medicine_list) {
-              const medRef = firestoreDoc(collection(db, 'medicines'));
-              batch.set(medRef, {
-                reportId: reportRef.id,
-                userId: user.uid,
-                name: med.name || 'Unknown Medicine',
-                dosage: med.dosage || '',
-                frequency: med.timing || med.frequency || '',
-                purpose: med.purpose || '',
-                side_effects: med.side_effects || '',
-                createdAt: serverTimestamp(),
-              });
-            }
-            await batch.commit();
+          
+          for (const img of processedImages) {
+            const reportId = Math.random().toString(36).substring(2, 15);
+            const extension = img.mimeType.split('/')[1] || 'jpg';
+            const storagePath = `medical_reports/${user.uid}/${reportId}.${extension}`;
+            const storageRef = ref(storage, storagePath);
+            
+            await uploadBytes(storageRef, img.blob);
+            const imageUrl = await getDownloadURL(storageRef);
+            
+            const reportData = {
+              user_id: user.uid,
+              report_id: reportId,
+              imageUrl: imageUrl,
+              image_url: imageUrl,
+              summary: analysis.holistic_summary || '',
+              ai_analysis: JSON.stringify(analysis),
+              created_at: serverTimestamp(),
+              is_multi_scan: true
+            };
+            
+            const newDocRef = firestoreDoc(reportsCollection);
+            batch.set(newDocRef, reportData);
           }
-          console.log("Background save complete");
+          
+          await batch.commit();
+          console.log("Background multi-save complete");
         } catch (bgError) {
-          console.error("Background save failed:", bgError);
+          console.error("Background multi-save failed:", bgError);
         }
       })();
     } catch (err: any) {
@@ -293,37 +248,115 @@ const Scan: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col gap-6"
           >
-            {/* Health Status Header */}
-            <div className={`card ${getStatusTheme(analysisResult.overall_health_status).bg} ${getStatusTheme(analysisResult.overall_health_status).text} border-none p-6 shadow-xl relative overflow-hidden`}>
-              <div className="relative z-10 flex items-center gap-4">
-                <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-                  {getStatusTheme(analysisResult.overall_health_status).icon}
-                </div>
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-widest opacity-80">Health Status</h3>
-                  <p className="text-2xl font-black">{analysisResult.overall_health_status || 'Analyzed'}</p>
-                </div>
-                {analysisResult.urgency_level && (
-                  <div className="ml-auto bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-white/30">
-                    Urgency: {analysisResult.urgency_level}/5
+            {/* Holistic Diagnosis Guess */}
+            {analysisResult.potential_diagnosis_guess && (
+              <div className={`card ${getStatusTheme(analysisResult.overall_health_status).bg} ${getStatusTheme(analysisResult.overall_health_status).text} border-none p-6 shadow-xl relative overflow-hidden`}>
+                <div className="relative z-10 flex items-center gap-4">
+                  <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
+                    <Stethoscope size={24} />
                   </div>
-                )}
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-widest opacity-80">Potential Diagnosis Guess</h3>
+                    <p className="text-2xl font-black">{analysisResult.potential_diagnosis_guess}</p>
+                    {analysisResult.urgency_level && (
+                      <p className="text-[10px] font-bold uppercase tracking-tighter mt-1 bg-white/20 inline-block px-2 py-0.5 rounded">
+                        Urgency: {analysisResult.urgency_level}
+                      </p>
+                    )}
+                  </div>
+                  {analysisResult.confidence_level && (
+                    <div className="ml-auto bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-white/30">
+                      Confidence: {analysisResult.confidence_level}
+                    </div>
+                  )}
+                </div>
+                <Activity className="absolute -right-8 -bottom-8 text-white/5" size={160} />
               </div>
-              <Activity className="absolute -right-8 -bottom-8 text-white/5" size={160} />
-            </div>
+            )}
 
-            {/* AI Summary */}
+            {/* Holistic Summary */}
             <div className="card p-6 bg-white border-slate-100 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
                   <Heart size={20} />
                 </div>
-                <h3 className="font-bold text-slate-800">Doctor's Summary</h3>
+                <h3 className="font-bold text-slate-800">Holistic Patient View</h3>
               </div>
               <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                {analysisResult.summary}
+                {analysisResult.holistic_summary || analysisResult.summary}
               </p>
+              {analysisResult.easy_explanation && (
+                <div className="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                  <p className="text-xs text-emerald-800 leading-relaxed italic">
+                    <span className="font-bold">Simple Explanation: </span>
+                    {analysisResult.easy_explanation}
+                  </p>
+                </div>
+              )}
             </div>
+
+            {/* Combined Symptoms */}
+            {analysisResult.combined_symptoms && analysisResult.combined_symptoms.length > 0 && (
+              <div className="card p-6 border-amber-100 bg-amber-50/30">
+                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                  <Thermometer size={20} className="text-amber-500" />
+                  Combined Symptoms Found
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {analysisResult.combined_symptoms.map((symptom: string, i: number) => (
+                    <span key={i} className="text-xs font-bold bg-white border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full shadow-sm">
+                      {symptom}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Dietary Recommendations */}
+            {analysisResult.dietary_recommendations && analysisResult.dietary_recommendations.length > 0 && (
+              <div className="card p-6 border-emerald-100 bg-emerald-50/30">
+                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                  <Heart size={20} className="text-emerald-500" />
+                  Dietary Recommendations
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {analysisResult.dietary_recommendations.map((item: any, i: number) => (
+                    <div key={i} className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm">
+                      <h4 className="font-bold text-emerald-800 text-sm mb-1">{item.food}</h4>
+                      <p className="text-xs text-slate-600 leading-tight">{item.benefit}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Reports Breakdown */}
+            {analysisResult.reports_breakdown && (
+              <div className="flex flex-col gap-4">
+                <h3 className="text-lg font-bold text-slate-800 px-1">Reports Breakdown</h3>
+                <div className="space-y-4">
+                  {analysisResult.reports_breakdown.map((report: any, i: number) => (
+                    <div key={i} className="card p-5 bg-white border-slate-100">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                          <FileText size={16} />
+                        </div>
+                        <h4 className="font-bold text-slate-800 capitalize">{report.type.replace('_', ' ')}</h4>
+                      </div>
+                      <p className="text-xs text-slate-600 mb-3">{report.summary}</p>
+                      <ul className="space-y-1">
+                        {report.findings.map((finding: string, j: number) => (
+                          <li key={j} className="text-[11px] text-slate-500 flex items-start gap-2">
+                            <div className="mt-1.5 w-1 h-1 rounded-full bg-primary shrink-0" />
+                            {finding}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Lab Results Visualization */}
             {analysisResult.lab_results && analysisResult.lab_results.length > 0 && (
@@ -394,7 +427,7 @@ const Scan: React.FC = () => {
 
             <div className="flex flex-col gap-3 mt-4">
               <button 
-                onClick={() => { setAnalysisResult(null); setImageBlob(null); setPreviewUrl(null); }}
+                onClick={() => { setAnalysisResult(null); setImageBlobs([]); setPreviewUrls([]); }}
                 className="btn-primary py-4 flex items-center justify-center gap-2"
               >
                 Scan Another <ArrowRight size={18} />
@@ -416,37 +449,55 @@ const Scan: React.FC = () => {
             className="flex flex-col gap-6"
           >
             <div 
-              className="flex-1 min-h-[300px] border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center gap-4 bg-slate-50 overflow-hidden relative shadow-inner"
+              className="flex-1 min-h-[300px] border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center gap-4 bg-slate-50 overflow-hidden relative shadow-inner p-4"
             >
-              {previewUrl ? (
-                <div className="w-full h-full relative group flex items-center justify-center">
-                  {previewUrl === 'pdf-placeholder' ? (
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-32 h-32 bg-red-50 rounded-2xl flex items-center justify-center text-red-500">
-                        <FileText size={64} />
-                      </div>
-                      <p className="font-bold text-slate-700">{(imageBlob as File)?.name}</p>
-                    </div>
-                  ) : (
-                    <img src={previewUrl} alt="Preview" className="w-full h-full object-contain" />
-                  )}
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              {previewUrls.length > 0 ? (
+                <>
+                  <div className="flex justify-between items-center w-full px-2 mb-2">
+                    <span className="text-xs font-bold text-slate-500">{imageBlobs.length} Documents Selected</span>
                     <button 
-                      onClick={() => { setPreviewUrl(null); setImageBlob(null); }}
-                      className="bg-white p-3 rounded-full shadow-lg text-red-500 hover:scale-110 transition-transform"
+                      onClick={() => { setImageBlobs([]); setPreviewUrls([]); }}
+                      className="text-[10px] font-bold text-rose-500 hover:text-rose-600 transition-colors flex items-center gap-1"
                     >
-                      <X size={24} />
+                      <Trash2 size={12} /> Clear All
                     </button>
                   </div>
+                  <div className="grid grid-cols-2 gap-4 w-full h-full overflow-y-auto p-2">
+                  {previewUrls.map((url, index) => (
+                    <div key={index} className="relative aspect-square bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm group">
+                      {url === 'pdf-placeholder' ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-red-500 gap-2">
+                          <FileText size={32} />
+                          <p className="text-[10px] font-bold truncate px-2 w-full text-center">{(imageBlobs[index] as File)?.name}</p>
+                        </div>
+                      ) : (
+                        <img src={url} alt="Preview" className="w-full h-full object-cover" />
+                      )}
+                      <button 
+                        onClick={() => removeImage(index)}
+                        className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full shadow-md text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="aspect-square border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:bg-slate-100 transition-colors"
+                  >
+                    <Upload size={24} />
+                    <span className="text-[10px] font-bold">Add More</span>
+                  </button>
                 </div>
-              ) : (
+              </>
+            ) : (
                 <div className="flex flex-col items-center gap-6 p-8">
                   <div className={`w-24 h-24 bg-white rounded-full shadow-sm flex items-center justify-center ${getAccentColor()}`}>
                     {getIcon()}
                   </div>
                   <div className="text-center">
-                    <p className="text-slate-600 font-medium">No document selected</p>
-                    <p className="text-slate-400 text-sm mt-1">Use the camera to scan or upload a file</p>
+                    <p className="text-slate-600 font-medium">No documents selected</p>
+                    <p className="text-slate-400 text-sm mt-1">Scan or upload multiple reports at once</p>
                   </div>
                 </div>
               )}
@@ -465,22 +516,22 @@ const Scan: React.FC = () => {
                   onClick={() => fileInputRef.current?.click()}
                   className="btn-secondary py-4 flex items-center justify-center gap-2"
                 >
-                  <Upload size={20} /> Upload File
+                  <Upload size={20} /> Upload Files
                 </button>
                 
                 <button 
-                  disabled={!imageBlob || loading || !user}
+                  disabled={imageBlobs.length === 0 || loading || !user}
                   onClick={handleScan}
-                  className={`py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${
-                    !imageBlob || loading || !user
+                  className={`py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all text-lg ${
+                    imageBlobs.length === 0 || loading || !user
                       ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-                      : 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 active:scale-95'
+                      : 'bg-emerald-600 text-white shadow-xl shadow-emerald-200 active:scale-95 hover:bg-emerald-700'
                   }`}
                 >
                   {loading ? (
                     <Loader2 className="animate-spin" size={20} />
                   ) : (
-                    <><CheckCircle2 size={20} /> Analyze</>
+                    <><CheckCircle2 size={20} /> Analyze All</>
                   )}
                 </button>
               </div>
@@ -490,12 +541,51 @@ const Scan: React.FC = () => {
                 </p>
               )}
             </div>
+
+            {/* Step-by-Step Guide */}
+            <div className="mt-8 bg-slate-50 p-6 rounded-3xl border border-slate-100">
+              <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <ShieldCheck size={18} className="text-emerald-500" />
+                How your history is saved
+              </h3>
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-bold shrink-0">1</div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-700">Secure Upload</p>
+                    <p className="text-[10px] text-slate-500">Your document is encrypted and stored in our private medical cloud.</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-bold shrink-0">2</div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-700">AI Processing</p>
+                    <p className="text-[10px] text-slate-500">Our medical-grade AI reads and interprets the document in seconds.</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-bold shrink-0">3</div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-700">Database Entry</p>
+                    <p className="text-[10px] text-slate-500">A structured record is created in your personal history database.</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-bold shrink-0">4</div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-700">Instant Access</p>
+                    <p className="text-[10px] text-slate-500">You can view your full medical history anytime from the Reports tab.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <input 
         type="file" 
+        multiple
         accept="image/*,application/pdf" 
         className="hidden" 
         ref={fileInputRef}
