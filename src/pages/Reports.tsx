@@ -19,15 +19,15 @@ const Reports: React.FC = () => {
 
     const q = query(
       collection(db, 'reports'),
-      where('user_id', '==', user.uid)
+      where('userId', '==', user.uid)
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       // Sort in memory to avoid needing a composite index
       docs.sort((a: any, b: any) => {
-        const timeA = a.created_at?.toMillis?.() || a.created_at?.seconds || 0;
-        const timeB = b.created_at?.toMillis?.() || b.created_at?.seconds || 0;
+        const timeA = a.createdAt?.toMillis?.() || a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.toMillis?.() || b.createdAt?.seconds || 0;
         return timeB - timeA;
       });
       setReports(docs);
@@ -38,10 +38,12 @@ const Reports: React.FC = () => {
     return unsub;
   }, [user]);
 
-  const filteredReports = reports.filter(r => 
-    r.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (r.analysis && r.analysis.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredReports = reports.filter(r => {
+    const diagnosis = r.analysis?.potential_diagnosis_guess || 'Medical Report';
+    const summary = r.analysis?.holistic_summary || r.summary || '';
+    return diagnosis.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           summary.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const handleDelete = async (report: any) => {
     if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) return;
@@ -51,15 +53,14 @@ const Reports: React.FC = () => {
       await deleteDoc(doc(db, 'reports', report.id));
       
       // 2. Delete from Storage if URL exists
-      if (report.imageUrl) {
-        const storageRef = ref(storage, report.imageUrl);
+      if (report.fileUrl) {
+        const storageRef = ref(storage, report.fileUrl);
         await deleteObject(storageRef).catch(err => console.error('Storage delete error:', err));
       }
       
       setSelectedReport(null);
     } catch (err) {
-      console.error('Delete error:', err);
-      alert('Failed to delete report.');
+      handleFirestoreError(err, OperationType.DELETE, `reports/${report.id}`);
     }
   };
 
@@ -99,13 +100,15 @@ const Reports: React.FC = () => {
               <FileText className="text-primary" size={24} />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-bold capitalize truncate">{report.type.replace('_', ' ')}</h4>
+              <h4 className="font-bold capitalize truncate">
+                {report.analysis?.potential_diagnosis_guess || report.fileName || 'Medical Report'}
+              </h4>
               <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
-                {report.summary || 'No summary available'}
+                {report.analysis?.holistic_summary || report.summary || 'No summary available'}
               </p>
               <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-1">
                 <Calendar size={10} />
-                {report.created_at?.toDate().toLocaleDateString()}
+                {report.createdAt?.toDate().toLocaleDateString()}
               </div>
             </div>
             <ChevronRight className="text-slate-300" size={20} />
@@ -138,8 +141,10 @@ const Reports: React.FC = () => {
             >
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-xl font-bold capitalize">{selectedReport.type.replace('_', ' ')}</h3>
-                  <p className="text-slate-500 text-sm">{selectedReport.created_at?.toDate().toLocaleString()}</p>
+                  <h3 className="text-xl font-bold capitalize">
+                    {selectedReport.analysis?.potential_diagnosis_guess || selectedReport.fileName || 'Medical Report'}
+                  </h3>
+                  <p className="text-slate-500 text-sm">{selectedReport.createdAt?.toDate().toLocaleString()}</p>
                 </div>
                 <button 
                   onClick={() => setSelectedReport(null)}
@@ -150,19 +155,23 @@ const Reports: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-6">
-                <img 
-                  src={selectedReport.imageUrl} 
-                  alt="Report Scan" 
-                  className="w-full rounded-2xl border border-slate-100"
-                />
+                {selectedReport.fileUrl && (
+                  <img 
+                    src={selectedReport.fileUrl} 
+                    alt="Report Scan" 
+                    className="w-full rounded-2xl border border-slate-100"
+                  />
+                )}
 
                 <div className="flex gap-3">
-                  <button 
-                    onClick={() => handleDownload(selectedReport.imageUrl)}
-                    className="flex-1 btn-secondary flex items-center justify-center gap-2 py-3"
-                  >
-                    <Download size={18} /> Download
-                  </button>
+                  {selectedReport.fileUrl && (
+                    <button 
+                      onClick={() => handleDownload(selectedReport.fileUrl)}
+                      className="flex-1 btn-secondary flex items-center justify-center gap-2 py-3"
+                    >
+                      <Download size={18} /> Download
+                    </button>
+                  )}
                   <button 
                     onClick={() => handleDelete(selectedReport)}
                     className="flex-1 bg-red-50 text-red-500 rounded-xl font-medium flex items-center justify-center gap-2 py-3 hover:bg-red-100 transition-colors"
@@ -173,11 +182,6 @@ const Reports: React.FC = () => {
 
                 <div className="mt-4">
                   <InterpretationView report={selectedReport} />
-                </div>
-
-                <h4 className="text-lg font-bold mt-8 mb-3 text-slate-400">Raw OCR Text</h4>
-                <div className="bg-slate-50 p-4 rounded-2xl text-xs font-mono whitespace-pre-wrap mb-6 text-slate-500 border border-slate-100">
-                  {selectedReport.ocr_text || 'No OCR text available.'}
                 </div>
                 
                 <p className="text-[10px] text-slate-400 italic text-center">

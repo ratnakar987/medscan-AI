@@ -27,13 +27,13 @@ const Register: React.FC = () => {
       await updateProfile(user, { displayName: name });
       
       await setDoc(doc(db, 'users', user.uid), {
-        user_id: user.uid,
+        uid: user.uid,
         email: user.email,
-        name: name,
+        displayName: name,
         phone: phone,
         age: parseInt(age),
         gender: gender,
-        created_at: serverTimestamp(),
+        createdAt: serverTimestamp(),
       });
 
       navigate('/');

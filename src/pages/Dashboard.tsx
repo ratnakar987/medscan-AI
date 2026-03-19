@@ -17,7 +17,7 @@ const Dashboard: React.FC = () => {
 
     const reportsQuery = query(
       collection(db, 'reports'),
-      where('user_id', '==', user.uid),
+      where('userId', '==', user.uid),
       limit(10) // Get a few more to sort in memory
     );
 
@@ -31,8 +31,8 @@ const Dashboard: React.FC = () => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       // Sort in memory to avoid needing a composite index
       docs.sort((a: any, b: any) => {
-        const timeA = a.created_at?.toMillis?.() || a.created_at?.seconds || 0;
-        const timeB = b.created_at?.toMillis?.() || b.created_at?.seconds || 0;
+        const timeA = a.createdAt?.toMillis?.() || a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.toMillis?.() || b.createdAt?.seconds || 0;
         return timeB - timeA;
       });
       setRecentReports(docs.slice(0, 3));
@@ -142,13 +142,13 @@ const Dashboard: React.FC = () => {
           >
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-3">
-                <div className={`p-2 rounded-lg ${getReportColor(latestReport.report_type || latestReport.type)} bg-opacity-20`}>
-                  {getReportIcon(latestReport.report_type || latestReport.type)}
+                <div className={`p-2 rounded-lg ${getReportColor(latestReport.type)} bg-opacity-20`}>
+                  {getReportIcon(latestReport.type)}
                 </div>
-                <h4 className="text-lg font-bold capitalize">{latestReport.report_type?.replace('_', ' ') || latestReport.type?.replace('_', ' ')}</h4>
+                <h4 className="text-lg font-bold capitalize">{latestReport.type?.replace('_', ' ')}</h4>
               </div>
               <p className="text-sm leading-relaxed opacity-90 font-medium">
-                {latestReport.summary || "No summary available for this report."}
+                {latestReport.analysis?.holistic_summary || latestReport.summary || "No summary available for this report."}
               </p>
               
               {latestReport.main_findings && latestReport.main_findings.length > 0 && (
@@ -233,13 +233,13 @@ const Dashboard: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="card flex items-center gap-4 hover:border-primary/30 transition-colors cursor-pointer"
               >
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getReportColor(report.report_type || report.type)}`}>
-                  {getReportIcon(report.report_type || report.type)}
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getReportColor(report.type)}`}>
+                  {getReportIcon(report.type)}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-bold text-slate-800 capitalize text-sm">{report.report_type?.replace('_', ' ') || report.type?.replace('_', ' ')}</h4>
+                  <h4 className="font-bold text-slate-800 capitalize text-sm">{report.type?.replace('_', ' ')}</h4>
                   <p className="text-[10px] text-slate-400 font-medium">
-                    {report.created_at?.toDate().toLocaleDateString()}
+                    {report.createdAt?.toDate().toLocaleDateString()}
                   </p>
                 </div>
                 <ChevronRight className="text-slate-300" size={20} />

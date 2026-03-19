@@ -62,32 +62,38 @@ interface InterpretationProps {
 }
 
 const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
-  // Parse legacy analysis if needed
-  let legacyAnalysis: any = {};
-  try {
-    if (report.analysis) {
-      legacyAnalysis = JSON.parse(report.analysis);
+  // Parse analysis if needed
+  let analysis: any = {};
+  if (typeof report.analysis === 'object' && report.analysis !== null) {
+    analysis = report.analysis;
+  } else {
+    try {
+      if (typeof report.analysis === 'string') {
+        analysis = JSON.parse(report.analysis);
+      } else if (report.ai_analysis) {
+        analysis = JSON.parse(report.ai_analysis);
+      }
+    } catch (e) {
+      console.error("Failed to parse analysis", e);
     }
-  } catch (e) {
-    console.error("Failed to parse legacy analysis", e);
   }
 
-  const summary = report.holistic_summary || report.summary || legacyAnalysis.holistic_summary || legacyAnalysis.summary;
-  const easyExplanation = report.easy_explanation || legacyAnalysis.easy_explanation;
-  const potentialSymptoms = report.combined_symptoms || report.potential_symptoms || legacyAnalysis.combined_symptoms || legacyAnalysis.potential_symptoms || [];
-  const mainFindings = report.main_findings || legacyAnalysis.main_findings || [];
-  const medicines = report.medicine_list || legacyAnalysis.medicines || [];
-  const labResults = report.lab_results || legacyAnalysis.labResults || [];
-  const imagingDetails = report.imaging_details || legacyAnalysis.imaging_details;
-  const ecgDetails = report.ecg_details || legacyAnalysis.ecg_details;
-  const aiAnalysis = report.ai_analysis;
-  const recommendations = legacyAnalysis.recommendations || [];
-  const diagnosisGuess = report.potential_diagnosis_guess || legacyAnalysis.potential_diagnosis_guess;
-  const confidence = report.confidence_level || legacyAnalysis.confidence_level;
-  const breakdown = report.reports_breakdown || legacyAnalysis.reports_breakdown;
-  const healthStatus = report.overall_health_status || legacyAnalysis.overall_health_status || 'Good';
-  const urgency = report.urgency_level || legacyAnalysis.urgency_level;
-  const dietaryRecommendations = report.dietary_recommendations || legacyAnalysis.dietary_recommendations || [];
+  const summary = report.holistic_summary || report.summary || analysis.holistic_summary || analysis.summary;
+  const easyExplanation = report.easy_explanation || analysis.easy_explanation;
+  const potentialSymptoms = report.combined_symptoms || report.potential_symptoms || analysis.combined_symptoms || analysis.potential_symptoms || [];
+  const mainFindings = report.main_findings || analysis.main_findings || [];
+  const medicines = report.medicine_list || analysis.medicine_list || analysis.medicines || [];
+  const labResults = report.lab_results || analysis.lab_results || analysis.labResults || [];
+  const imagingDetails = report.imaging_details || analysis.imaging_details;
+  const ecgDetails = report.ecg_details || analysis.ecg_details;
+  const aiAnalysis = report.ai_analysis || analysis.ai_analysis;
+  const recommendations = analysis.recommendations || [];
+  const diagnosisGuess = report.potential_diagnosis_guess || analysis.potential_diagnosis_guess;
+  const confidence = report.confidence_level || analysis.confidence_level;
+  const breakdown = report.reports_breakdown || analysis.reports_breakdown;
+  const healthStatus = report.overall_health_status || analysis.overall_health_status || 'Good';
+  const urgency = report.urgency_level || analysis.urgency_level;
+  const dietaryRecommendations = report.dietary_recommendations || analysis.dietary_recommendations || [];
 
   const getStatusBg = (status: string) => {
     switch (status) {

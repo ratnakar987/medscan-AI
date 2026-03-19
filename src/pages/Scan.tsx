@@ -86,6 +86,7 @@ const Scan: React.FC = () => {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -176,7 +177,32 @@ const Scan: React.FC = () => {
       }));
 
       setStatus('Holistic AI Analysis...');
-      const analysis = await analyzeMedicalImages(processedImages.map(img => ({ base64: img.base64, mimeType: img.mimeType })));
+      
+      // 1. Start Gemini Analysis
+      const analysisPromise = analyzeMedicalImages(processedImages.map(img => ({ base64: img.base64, mimeType: img.mimeType })));
+      
+      // 2. Start Storage Uploads in parallel with Gemini
+      const storageUploadPromises = processedImages.map(async (img) => {
+        const reportId = Math.random().toString(36).substring(2, 15);
+        const extension = img.mimeType.split('/')[1] || 'jpg';
+        const storagePath = `medical_reports/${user.uid}/${reportId}.${extension}`;
+        const storageRef = ref(storage, storagePath);
+        
+        console.log(`Uploading to storage (parallel): ${storagePath}`);
+        try {
+          await uploadBytes(storageRef, img.blob);
+          const fileUrl = await getDownloadURL(storageRef);
+          console.log(`Upload successful (parallel): ${fileUrl}`);
+          return { ...img, fileUrl, reportId, extension };
+        } catch (storageErr: any) {
+          console.error(`Storage upload failed for ${storagePath}:`, storageErr);
+          // Fallback to a placeholder if storage fails, so we still save the analysis
+          return { ...img, fileUrl: 'https://picsum.photos/seed/medical/800/600', reportId, extension };
+        }
+      });
+
+      // Wait for Gemini first to show results to user ASAP
+      const analysis = await analysisPromise;
 
       if (!analysis) {
         throw new Error("The AI was unable to interpret these documents.");
@@ -185,41 +211,57 @@ const Scan: React.FC = () => {
       setAnalysisResult(analysis);
       setLoading(false);
       setStatus('Analysis Complete');
+      setSaving(true);
 
-      // Background Persistence
+      // 3. Background Persistence (wait for storage and then save to Firestore)
       (async () => {
         try {
+          const uploadedImages = await Promise.all(storageUploadPromises);
           const batch = writeBatch(db);
           const reportsCollection = collection(db, 'reports');
+          const medicinesCollection = collection(db, 'medicines');
           
-          for (const img of processedImages) {
-            const reportId = Math.random().toString(36).substring(2, 15);
-            const extension = img.mimeType.split('/')[1] || 'jpg';
-            const storagePath = `medical_reports/${user.uid}/${reportId}.${extension}`;
-            const storageRef = ref(storage, storagePath);
-            
-            await uploadBytes(storageRef, img.blob);
-            const imageUrl = await getDownloadURL(storageRef);
-            
+          console.log("Starting background Firestore persistence...");
+          
+          // Prepare Reports
+          for (const img of uploadedImages) {
+            const reportDocRef = firestoreDoc(reportsCollection);
             const reportData = {
-              user_id: user.uid,
-              report_id: reportId,
-              imageUrl: imageUrl,
-              image_url: imageUrl,
-              summary: analysis.holistic_summary || '',
-              ai_analysis: JSON.stringify(analysis),
-              created_at: serverTimestamp(),
-              is_multi_scan: true
+              userId: user.uid,
+              fileName: (img.blob as File).name || `report_${img.reportId}.${img.extension}`,
+              fileUrl: img.fileUrl,
+              type: analysis.reports_breakdown?.[0]?.type || 'medical_report',
+              analysis: analysis,
+              createdAt: serverTimestamp(),
             };
-            
-            const newDocRef = firestoreDoc(reportsCollection);
-            batch.set(newDocRef, reportData);
+            batch.set(reportDocRef, reportData);
+          }
+
+          // Prepare Medicines
+          const medicineList = analysis.medicine_list || analysis.medicines || [];
+          for (const med of medicineList) {
+            const medDocRef = firestoreDoc(medicinesCollection);
+            const medData = {
+              userId: user.uid,
+              medicine_name: med.name || 'Unknown Medicine',
+              dosage: med.dosage || 'Not specified',
+              timing: med.timing || 'Not specified',
+              use: med.purpose || med.simple_explanation || 'Not specified',
+              side_effects: med.side_effects || 'Not specified',
+              createdAt: serverTimestamp(),
+            };
+            batch.set(medDocRef, medData);
           }
           
           await batch.commit();
-          console.log("Background multi-save complete");
-        } catch (bgError) {
-          console.error("Background multi-save failed:", bgError);
+          console.log("Background persistence complete");
+          setSaving(false);
+        } catch (bgError: any) {
+          console.error("Background persistence failed:", bgError);
+          setSaving(false);
+          if (bgError.code?.startsWith('firestore/') || bgError.message?.includes('permission')) {
+            handleFirestoreError(bgError, OperationType.WRITE, 'batch_save');
+          }
         }
       })();
     } catch (err: any) {
@@ -251,12 +293,29 @@ const Scan: React.FC = () => {
             {/* Holistic Diagnosis Guess */}
             {analysisResult.potential_diagnosis_guess && (
               <div className={`card ${getStatusTheme(analysisResult.overall_health_status).bg} ${getStatusTheme(analysisResult.overall_health_status).text} border-none p-6 shadow-xl relative overflow-hidden`}>
+                {saving && (
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 overflow-hidden z-20">
+                    <motion.div 
+                      initial={{ x: '-100%' }}
+                      animate={{ x: '100%' }}
+                      transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                      className="w-1/2 h-full bg-white"
+                    />
+                  </div>
+                )}
                 <div className="relative z-10 flex items-center gap-4">
                   <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
                     <Stethoscope size={24} />
                   </div>
                   <div>
-                    <h3 className="text-xs font-black uppercase tracking-widest opacity-80">Potential Diagnosis Guess</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs font-black uppercase tracking-widest opacity-80">Potential Diagnosis Guess</h3>
+                      {saving && (
+                        <span className="text-[8px] bg-white/20 px-1.5 py-0.5 rounded flex items-center gap-1 animate-pulse">
+                          <Loader2 size={8} className="animate-spin" /> Saving...
+                        </span>
+                      )}
+                    </div>
                     <p className="text-2xl font-black">{analysisResult.potential_diagnosis_guess}</p>
                     {analysisResult.urgency_level && (
                       <p className="text-[10px] font-bold uppercase tracking-tighter mt-1 bg-white/20 inline-block px-2 py-0.5 rounded">

@@ -1,46 +1,38 @@
-rules_version = '2';
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: {userId}
+// Fields:
+//   - uid: string (required) - Firebase Auth UID
+//   - email: string (required) - User's email address
+//   - displayName: string (optional) - User's display name
+//   - photoURL: string (optional) - User's profile picture URL
+//   - createdAt: string (required) - ISO 8601 date-time
+//
+// Collection: reports
+// Document ID: {reportId}
+// Fields:
+//   - userId: string (required) - UID of the user who owns this report
+//   - fileName: string (optional) - Name of the uploaded file
+//   - fileUrl: string (optional) - URL of the file in Firebase Storage
+//   - analysis: map (required) - AI analysis results
+//     - diagnosis: string
+//     - medicines: list of maps
+//     - dietaryRecommendations: list of maps
+//     - summary: string
+//   - createdAt: string (required) - ISO 8601 date-time
+//
+// ===============================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    //
-    // Collection: users
-    // Document ID: {uid}
-    // Fields:
-    //   - uid: string (required) - User ID
-    //   - email: string (required) - User email
-    //   - displayName: string (optional)
-    //   - photoURL: string (optional)
-    //   - createdAt: timestamp (required)
-    //
-    // Collection: reports
-    // Document ID: {reportId}
-    // Fields:
-    //   - report_id: string (required)
-    //   - user_id: string (required) - Owner ID
-    //   - image_url: string (required)
-    //   - analysis: string (optional)
-    //   - summary: string (optional)
-    //   - status: string (required)
-    //   - created_at: timestamp (required)
-    //
-    // Collection: medicines
-    // Document ID: {medicineId}
-    // Fields:
-    //   - userId: string (required)
-    //   - reportId: string (required)
-    //   - name: string (required)
-    //   - dosage: string (optional)
-    //   - frequency: string (optional)
-    //   - createdAt: timestamp (required)
-    //
-    // ===============================================================
 
     // ===============================================================
     // Helper Functions
     // ===============================================================
-    
+
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -49,76 +41,104 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isAdmin() {
-      return isAuthenticated() && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         (request.auth.token.email == "ratnakarshukla987@gmail.com" && request.auth.token.email_verified == true));
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
     }
+
+    function uidUnchanged() {
+      return !('userId' in request.resource.data) ||
+        request.resource.data.userId == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('userId' in request.resource.data) ||
+        request.resource.data.userId == resource.data.userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDate(date) {
+      return date is timestamp;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "ratnakarshukla987@gmail.com" && request.auth.token.email_verified == true) ||
+          (request.auth.token.email == "deltronicspowersolution@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
 
     function isValidUser(data) {
       return data.keys().hasAll(['uid', 'email', 'createdAt']) &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 128 &&
-             data.email is string && data.email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") &&
-             data.email.size() < 256 &&
-             data.createdAt is timestamp &&
+             data.uid == request.auth.uid &&
+             isValidEmail(data.email) &&
+             isValidDate(data.createdAt) &&
              (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
-             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() < 1000)) &&
-             (!('role' in data) || (data.role is string && data.role in ['user', 'admin']));
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() < 500)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() < 20)) &&
+             (!('age' in data) || (data.age is number && data.age >= 0 && data.age < 150)) &&
+             (!('gender' in data) || (data.gender in ['male', 'female', 'other']));
     }
 
     function isValidReport(data) {
-      return data.keys().hasAll(['report_id', 'user_id', 'image_url', 'status', 'created_at']) &&
-             data.report_id is string && data.report_id.size() > 0 && data.report_id.size() < 128 &&
-             data.user_id is string && data.user_id == request.auth.uid &&
-             data.image_url is string && data.image_url.matches("^https?://.*") && data.image_url.size() < 2048 &&
-             data.status in ['pending', 'completed', 'error'] &&
-             data.created_at is timestamp &&
-             (!('summary' in data) || (data.summary is string && data.summary.size() < 1000)) &&
-             (!('analysis' in data) || (data.analysis is string && data.analysis.size() < 50000));
+      return data.keys().hasAll(['userId', 'analysis', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             isValidDate(data.createdAt) &&
+             data.analysis is map &&
+             (!('type' in data) || (data.type is string && data.type.size() < 100)) &&
+             (!('fileName' in data) || (data.fileName is string && data.fileName.size() < 255)) &&
+             (!('fileUrl' in data) || (data.fileUrl is string && data.fileUrl.size() < 1000));
     }
 
     function isValidMedicine(data) {
-      return data.keys().hasAll(['userId', 'name', 'createdAt']) &&
-             data.userId is string && data.userId == request.auth.uid &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
-             data.createdAt is timestamp &&
-             (!('dosage' in data) || (data.dosage is string && data.dosage.size() < 500)) &&
-             (!('frequency' in data) || (data.frequency is string && data.frequency.size() < 500));
+      return data.keys().hasAll(['userId', 'medicine_name', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             isValidDate(data.createdAt) &&
+             data.medicine_name is string && data.medicine_name.size() < 255 &&
+             (!('dosage' in data) || (data.dosage is string && data.dosage.size() < 255)) &&
+             (!('frequency' in data) || (data.frequency is string && data.frequency.size() < 255)) &&
+             (!('timing' in data) || (data.timing is string && data.timing.size() < 255)) &&
+             (!('use' in data) || (data.use is string && data.use.size() < 1000)) &&
+             (!('side_effects' in data) || (data.side_effects is string && data.side_effects.size() < 1000)) &&
+             (!('reportId' in data) || (data.reportId is string && data.reportId.size() < 100)) &&
+             (!('type' in data) || (data.type is string && data.type.size() < 100));
     }
 
     // ===============================================================
     // Rules
     // ===============================================================
 
-    match /users/{uid} {
-      allow read: if isOwner(uid) || isAdmin();
-      allow create: if isOwner(uid) && isValidUser(request.resource.data) && 
-                    (!('role' in request.resource.data) || request.resource.data.role == 'user');
-      allow update: if isOwner(uid) && isValidUser(request.resource.data) && 
-                    request.resource.data.uid == resource.data.uid &&
-                    request.resource.data.createdAt == resource.data.createdAt &&
-                    (request.resource.data.role == resource.data.role || isAdmin());
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
       allow delete: if isAdmin();
     }
 
     match /reports/{reportId} {
-      allow read: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isAuthenticated() && isValidReport(request.resource.data);
-      allow update: if isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin()) && 
-                    isValidReport(request.resource.data) &&
-                    request.resource.data.user_id == resource.data.user_id &&
-                    request.resource.data.created_at == resource.data.created_at;
-      allow delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin());
+      allow update: if isAuthenticated() && isDocOwner() && isValidReport(request.resource.data) && uidNotModified();
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
     }
 
     match /medicines/{medicineId} {
-      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isAuthenticated() && isValidMedicine(request.resource.data);
-      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin()) && 
-                    isValidMedicine(request.resource.data) &&
-                    request.resource.data.userId == resource.data.userId &&
-                    request.resource.data.createdAt == resource.data.createdAt;
-      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAuthenticated() && isDocOwner() && isValidMedicine(request.resource.data) && uidNotModified();
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

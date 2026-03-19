@@ -1,60 +1,89 @@
 {
   "entities": {
     "User": {
-      "title": "User",
-      "description": "User profile information",
+      "title": "User Profile",
+      "description": "Information about the user",
       "type": "object",
       "properties": {
-        "uid": { "type": "string", "description": "Unique user ID from Firebase Auth" },
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
         "email": { "type": "string", "format": "email", "description": "User's email address" },
         "displayName": { "type": "string", "description": "User's display name" },
-        "photoURL": { "type": "string", "description": "URL to user's profile picture" },
-        "createdAt": { "type": "string", "format": "date-time", "description": "When the profile was created" }
+        "photoURL": { "type": "string", "description": "User's profile picture URL" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user profile was created" }
       },
       "required": ["uid", "email"]
     },
-    "Report": {
-      "title": "Medical Report",
-      "description": "A scanned medical report and its AI analysis",
+    "MedicalReport": {
+      "title": "Medical Report Analysis",
+      "description": "Analysis results from a medical report scan",
       "type": "object",
       "properties": {
-        "report_id": { "type": "string", "description": "Unique report ID" },
-        "user_id": { "type": "string", "description": "Owner's user ID" },
-        "image_url": { "type": "string", "description": "URL to the stored image" },
-        "analysis": { "type": "string", "description": "Full AI analysis JSON string" },
-        "summary": { "type": "string", "description": "Brief summary of the report" },
-        "status": { "type": "string", "enum": ["pending", "completed", "error"], "description": "Processing status" },
-        "created_at": { "type": "string", "format": "date-time", "description": "When the report was scanned" }
+        "id": { "type": "string", "description": "Unique ID for the report" },
+        "userId": { "type": "string", "description": "UID of the user who owns this report" },
+        "fileName": { "type": "string", "description": "Name of the uploaded file" },
+        "fileUrl": { "type": "string", "description": "URL of the file in Firebase Storage" },
+        "analysis": {
+          "type": "object",
+          "properties": {
+            "diagnosis": { "type": "string", "description": "AI-suggested diagnosis" },
+            "medicines": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "dosage": { "type": "string" },
+                  "purpose": { "type": "string" }
+                }
+              }
+            },
+            "dietaryRecommendations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "food": { "type": "string" },
+                  "benefit": { "type": "string" }
+                }
+              }
+            },
+            "summary": { "type": "string" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the report was created" }
       },
-      "required": ["report_id", "user_id", "image_url"]
+      "required": ["userId", "analysis", "createdAt"]
     },
     "Medicine": {
-      "title": "Medicine",
-      "description": "A medicine extracted from a report",
+      "title": "Extracted Medicine",
+      "description": "Information about a specific medicine extracted from a prescription",
       "type": "object",
       "properties": {
-        "userId": { "type": "string", "description": "Owner's user ID" },
-        "reportId": { "type": "string", "description": "Source report ID" },
-        "name": { "type": "string", "description": "Medicine name" },
-        "dosage": { "type": "string", "description": "Dosage instructions" },
-        "frequency": { "type": "string", "description": "Frequency of intake" },
-        "createdAt": { "type": "string", "format": "date-time", "description": "When the medicine was added" }
+        "userId": { "type": "string" },
+        "medicine_name": { "type": "string" },
+        "dosage": { "type": "string" },
+        "frequency": { "type": "string" },
+        "timing": { "type": "string" },
+        "use": { "type": "string" },
+        "side_effects": { "type": "string" },
+        "reportId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["userId", "name"]
+      "required": ["userId", "medicine_name", "createdAt"]
     }
   },
   "firestore": {
-    "/users/{uid}": {
+    "users/{userId}": {
       "schema": "User",
       "description": "User profiles"
     },
-    "/reports/{reportId}": {
-      "schema": "Report",
-      "description": "Medical reports collection"
+    "reports/{reportId}": {
+      "schema": "MedicalReport",
+      "description": "Medical report analyses"
     },
-    "/medicines/{medicineId}": {
+    "medicines/{medicineId}": {
       "schema": "Medicine",
-      "description": "Medicines collection"
+      "description": "Extracted medicines"
     }
   }
 }

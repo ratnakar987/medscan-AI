@@ -4,7 +4,7 @@ import { initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../firebase-applet-config.json';
 
-console.log("Initializing Firebase with Project ID:", firebaseConfig.projectId);
+console.log("Initializing Firebase with Project ID:", firebaseConfig.projectId, "Database ID:", firebaseConfig.firestoreDatabaseId);
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
