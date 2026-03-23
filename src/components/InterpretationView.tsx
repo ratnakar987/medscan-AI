@@ -1,7 +1,8 @@
-import React from 'react';
-import { Pill, Activity, AlertCircle, CheckCircle2, Info, FileText, ArrowRight, Stethoscope, Heart } from 'lucide-react';
+import React, { useState } from 'react';
+import { Pill, Activity, AlertCircle, CheckCircle2, Info, FileText, ArrowRight, Stethoscope, Heart, Download, Share2, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'motion/react';
+import { downloadPDF, shareReport } from '../utils/reportGenerator';
 
 interface Medicine {
   name: string;
@@ -62,6 +63,9 @@ interface InterpretationProps {
 }
 
 const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+
   // Parse analysis if needed
   let analysis: any = {};
   if (typeof report.analysis === 'object' && report.analysis !== null) {
@@ -103,9 +107,53 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
     }
   };
 
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const fileName = `Medical_Report_${diagnosisGuess || 'Analysis'}_${new Date().toISOString().split('T')[0]}`;
+      await downloadPDF('report-content', fileName);
+    } catch (error) {
+      console.error('Download failed', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    setIsSharing(true);
+    try {
+      await shareReport(report);
+    } catch (error) {
+      console.error('Share failed', error);
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8 py-4">
-      {/* Diagnosis Guess - Prominent */}
+      {/* Action Buttons */}
+      <div className="flex items-center justify-end gap-3 px-1">
+        <button
+          onClick={handleShare}
+          disabled={isSharing}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors disabled:opacity-50"
+        >
+          {isSharing ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
+          Share
+        </button>
+        <button
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50"
+        >
+          {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+          Download PDF
+        </button>
+      </div>
+
+      <div id="report-content" className="flex flex-col gap-8 bg-white p-2 rounded-3xl">
+        {/* Diagnosis Guess - Prominent */}
       {diagnosisGuess && (
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
@@ -467,6 +515,8 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
           </ul>
         </motion.div>
       )}
+
+      </div>
 
       {/* Disclaimer */}
       <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">

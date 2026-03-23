@@ -17,8 +17,25 @@ const configBucketName = firebaseConfig.storageBucket;
 
 try {
   if (!admin.apps.length) {
+    let credential;
+    const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+    
+    if (serviceAccountVar) {
+      try {
+        const serviceAccount = JSON.parse(serviceAccountVar);
+        credential = admin.credential.cert(serviceAccount);
+        console.log("Using Service Account from environment variable");
+      } catch (parseError) {
+        console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT JSON:", parseError);
+        credential = admin.credential.applicationDefault();
+      }
+    } else {
+      credential = admin.credential.applicationDefault();
+      console.log("Using Application Default Credentials");
+    }
+
     admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
+      credential,
       storageBucket: configBucketName || defaultBucketName,
       projectId: firebaseConfig.projectId,
     });

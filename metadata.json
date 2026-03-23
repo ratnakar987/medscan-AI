@@ -1,5 +1,5 @@
 {
-  "name": "MedScan AI",
+  "name": "RxDecode AI",
   "description": "Scan prescriptions and medical reports to understand medicines and test results using AI.",
   "requestFramePermissions": [
     "camera"

@@ -8,6 +8,7 @@ import { collection, addDoc, serverTimestamp, writeBatch, doc as firestoreDoc } 
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import CameraScanner from '../components/CameraScanner';
+import InterpretationView from '../components/InterpretationView';
 import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
 import { compressImage } from '../utils/imageCompression';
 
@@ -290,199 +291,14 @@ const Scan: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col gap-6"
           >
-            {/* Holistic Diagnosis Guess */}
-            {analysisResult.potential_diagnosis_guess && (
-              <div className={`card ${getStatusTheme(analysisResult.overall_health_status).bg} ${getStatusTheme(analysisResult.overall_health_status).text} border-none p-6 shadow-xl relative overflow-hidden`}>
-                {saving && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 overflow-hidden z-20">
-                    <motion.div 
-                      initial={{ x: '-100%' }}
-                      animate={{ x: '100%' }}
-                      transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                      className="w-1/2 h-full bg-white"
-                    />
-                  </div>
-                )}
-                <div className="relative z-10 flex items-center gap-4">
-                  <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-                    <Stethoscope size={24} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-xs font-black uppercase tracking-widest opacity-80">Potential Diagnosis Guess</h3>
-                      {saving && (
-                        <span className="text-[8px] bg-white/20 px-1.5 py-0.5 rounded flex items-center gap-1 animate-pulse">
-                          <Loader2 size={8} className="animate-spin" /> Saving...
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-2xl font-black">{analysisResult.potential_diagnosis_guess}</p>
-                    {analysisResult.urgency_level && (
-                      <p className="text-[10px] font-bold uppercase tracking-tighter mt-1 bg-white/20 inline-block px-2 py-0.5 rounded">
-                        Urgency: {analysisResult.urgency_level}
-                      </p>
-                    )}
-                  </div>
-                  {analysisResult.confidence_level && (
-                    <div className="ml-auto bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-white/30">
-                      Confidence: {analysisResult.confidence_level}
-                    </div>
-                  )}
-                </div>
-                <Activity className="absolute -right-8 -bottom-8 text-white/5" size={160} />
+            {saving && (
+              <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex items-center gap-3 animate-pulse">
+                <Loader2 size={20} className="text-emerald-500 animate-spin" />
+                <p className="text-sm font-bold text-emerald-700">Saving to your medical history...</p>
               </div>
             )}
 
-            {/* Holistic Summary */}
-            <div className="card p-6 bg-white border-slate-100 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                  <Heart size={20} />
-                </div>
-                <h3 className="font-bold text-slate-800">Holistic Patient View</h3>
-              </div>
-              <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                {analysisResult.holistic_summary || analysisResult.summary}
-              </p>
-              {analysisResult.easy_explanation && (
-                <div className="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-                  <p className="text-xs text-emerald-800 leading-relaxed italic">
-                    <span className="font-bold">Simple Explanation: </span>
-                    {analysisResult.easy_explanation}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Combined Symptoms */}
-            {analysisResult.combined_symptoms && analysisResult.combined_symptoms.length > 0 && (
-              <div className="card p-6 border-amber-100 bg-amber-50/30">
-                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <Thermometer size={20} className="text-amber-500" />
-                  Combined Symptoms Found
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {analysisResult.combined_symptoms.map((symptom: string, i: number) => (
-                    <span key={i} className="text-xs font-bold bg-white border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full shadow-sm">
-                      {symptom}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Dietary Recommendations */}
-            {analysisResult.dietary_recommendations && analysisResult.dietary_recommendations.length > 0 && (
-              <div className="card p-6 border-emerald-100 bg-emerald-50/30">
-                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <Heart size={20} className="text-emerald-500" />
-                  Dietary Recommendations
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {analysisResult.dietary_recommendations.map((item: any, i: number) => (
-                    <div key={i} className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm">
-                      <h4 className="font-bold text-emerald-800 text-sm mb-1">{item.food}</h4>
-                      <p className="text-xs text-slate-600 leading-tight">{item.benefit}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Reports Breakdown */}
-            {analysisResult.reports_breakdown && (
-              <div className="flex flex-col gap-4">
-                <h3 className="text-lg font-bold text-slate-800 px-1">Reports Breakdown</h3>
-                <div className="space-y-4">
-                  {analysisResult.reports_breakdown.map((report: any, i: number) => (
-                    <div key={i} className="card p-5 bg-white border-slate-100">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                          <FileText size={16} />
-                        </div>
-                        <h4 className="font-bold text-slate-800 capitalize">{report.type.replace('_', ' ')}</h4>
-                      </div>
-                      <p className="text-xs text-slate-600 mb-3">{report.summary}</p>
-                      <ul className="space-y-1">
-                        {report.findings.map((finding: string, j: number) => (
-                          <li key={j} className="text-[11px] text-slate-500 flex items-start gap-2">
-                            <div className="mt-1.5 w-1 h-1 rounded-full bg-primary shrink-0" />
-                            {finding}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Lab Results Visualization */}
-            {analysisResult.lab_results && analysisResult.lab_results.length > 0 && (
-              <div className="flex flex-col gap-4">
-                <h3 className="text-lg font-bold text-slate-800 px-1">Lab Analysis</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  {analysisResult.lab_results.map((result: any, i: number) => (
-                    <LabResultVisualizer key={i} result={result} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Prescription Guide */}
-            {analysisResult.medicine_list && analysisResult.medicine_list.length > 0 && (
-              <div className="flex flex-col gap-4">
-                <h3 className="text-lg font-bold text-slate-800 px-1">Prescription Guide</h3>
-                <div className="space-y-4">
-                  {analysisResult.medicine_list.map((med: any, i: number) => (
-                    <div key={i} className="card p-5 border-l-4 border-l-blue-500 bg-blue-50/20">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
-                            <Pill size={20} />
-                          </div>
-                          <h4 className="font-bold text-slate-800">{med.name}</h4>
-                        </div>
-                        <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-1 rounded-md uppercase">{med.timing}</span>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-2">
-                          <div className="mt-1 text-blue-500"><Info size={14} /></div>
-                          <p className="text-xs text-slate-600 font-medium">
-                            <span className="font-bold text-slate-800">Why: </span>
-                            {med.simple_explanation || med.purpose}
-                          </p>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <div className="mt-1 text-emerald-500"><Thermometer size={14} /></div>
-                          <p className="text-xs text-slate-600 font-medium">
-                            <span className="font-bold text-slate-800">Dosage: </span>
-                            {med.dosage}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Key Findings */}
-            <div className="card p-6">
-              <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <CheckCircle2 size={20} className="text-emerald-500" />
-                Key Findings
-              </h3>
-              <ul className="space-y-3">
-                {analysisResult.main_findings?.map((finding: string, i: number) => (
-                  <li key={i} className="flex gap-3 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <span className="font-bold text-primary">{i + 1}.</span>
-                    {finding}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <InterpretationView report={analysisResult} />
 
             <div className="flex flex-col gap-3 mt-4">
               <button 
