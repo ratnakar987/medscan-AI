@@ -124,7 +124,8 @@ export const shareReport = async (report: any) => {
 
 const copyToClipboard = (text: string) => {
   navigator.clipboard.writeText(text).then(() => {
-    alert('Report summary copied to clipboard!');
+    // We don't use alert() in iframes, so we'll just log it or rely on the UI to show success
+    console.log('Report summary copied to clipboard!');
   }).catch(err => {
     console.error('Clipboard copy failed:', err);
   });

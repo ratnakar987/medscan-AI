@@ -89,6 +89,7 @@ const Scan: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
+  const [loadingMessage, setLoadingMessage] = useState('Analyzing your report...');
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
@@ -179,6 +180,20 @@ const Scan: React.FC = () => {
 
       setStatus('Holistic AI Analysis...');
       
+      // Dynamic loading messages
+      const messages = [
+        "Analyzing your report...",
+        "Checking medical values...",
+        "Generating health insights...",
+        "Structuring diet recommendations...",
+        "Finalizing interpretation..."
+      ];
+      let msgIndex = 0;
+      const msgInterval = setInterval(() => {
+        msgIndex = (msgIndex + 1) % messages.length;
+        setLoadingMessage(messages[msgIndex]);
+      }, 2500);
+
       // 1. Start Gemini Analysis
       const analysisPromise = analyzeMedicalImages(processedImages.map(img => ({ base64: img.base64, mimeType: img.mimeType })));
       
@@ -204,6 +219,7 @@ const Scan: React.FC = () => {
 
       // Wait for Gemini first to show results to user ASAP
       const analysis = await analysisPromise;
+      clearInterval(msgInterval);
 
       if (!analysis) {
         throw new Error("The AI was unable to interpret these documents.");
@@ -282,6 +298,37 @@ const Scan: React.FC = () => {
             : `Capture your ${docType?.replace('_', ' ') || 'medical document'} for instant analysis`}
         </p>
       </div>
+
+      {loading && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-white/90 backdrop-blur-xl z-[200] flex flex-col items-center justify-center p-6 text-center"
+        >
+          <div className="relative w-32 h-32 mb-8">
+            <div className="absolute inset-0 border-4 border-primary/10 rounded-full"></div>
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full"
+            ></motion.div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Activity size={40} className="text-primary animate-pulse" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-black text-slate-900 mb-2">{loadingMessage}</h3>
+          <p className="text-slate-500 font-bold">This usually takes 10-15 seconds...</p>
+          
+          <div className="mt-12 max-w-xs w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: '100%' }}
+              transition={{ duration: 15, ease: "linear" }}
+              className="h-full bg-primary"
+            ></motion.div>
+          </div>
+        </motion.div>
+      )}
 
       <AnimatePresence mode="wait">
         {analysisResult ? (

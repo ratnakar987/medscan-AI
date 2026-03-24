@@ -1,6 +1,6 @@
 {
-  "name": "RxDecode AI",
-  "description": "Scan prescriptions and medical reports to understand medicines and test results using AI.",
+  "name": "RXDecode",
+  "description": "A trusted, professional AI-powered medical report analysis platform. Understand your medical reports instantly with clear, actionable insights and personalized health guidance.",
   "requestFramePermissions": [
     "camera"
   ]

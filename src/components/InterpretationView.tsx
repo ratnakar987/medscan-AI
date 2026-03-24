@@ -105,10 +105,9 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
   const urgency = report.urgency_level || analysis.urgency_level;
   
   const dietRecommendations = report.diet_recommendations || analysis.diet_recommendations || report.dietary_recommendations || analysis.dietary_recommendations || {};
-  const dietaryRecommendations = Array.isArray(dietRecommendations) ? dietRecommendations : (dietRecommendations.to_eat || []);
-  const recommendations = nextSteps;
   const toEat = Array.isArray(dietRecommendations) ? dietRecommendations : (dietRecommendations.to_eat || []);
-  const toAvoid = dietRecommendations.to_avoid || [];
+  const toAvoid = Array.isArray(dietRecommendations) ? [] : (dietRecommendations.to_avoid || []);
+  const recommendations = nextSteps;
 
   const getStatusBg = (status: string) => {
     switch (status) {
@@ -591,26 +590,52 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
       )}
 
       {/* Dietary Recommendations Section */}
-      {dietaryRecommendations.length > 0 && (
+      {(toEat.length > 0 || toAvoid.length > 0) && (
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
           className="bg-emerald-50/50 rounded-3xl p-6 border border-emerald-100"
         >
-          <div className="flex items-center gap-2 mb-4 text-emerald-700">
+          <div className="flex items-center gap-2 mb-6 text-emerald-700">
             <div className="bg-emerald-100 p-2 rounded-xl">
               <Heart size={20} className="text-emerald-600" />
             </div>
             <h3 className="font-bold text-lg">Dietary Recommendations</h3>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {dietaryRecommendations.map((item: any, idx: number) => (
-              <div key={idx} className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm">
-                <h4 className="font-bold text-emerald-800 text-sm mb-1">{item.food}</h4>
-                <p className="text-xs text-slate-600 leading-tight">{item.benefit}</p>
+
+          <div className="space-y-6">
+            {toEat.length > 0 && (
+              <div>
+                <h4 className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <CheckCircle2 size={14} /> Foods to Include
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {toEat.map((item: any, idx: number) => (
+                    <div key={idx} className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm">
+                      <h5 className="font-bold text-emerald-800 text-sm mb-1">{item.food}</h5>
+                      <p className="text-xs text-slate-600 leading-tight">{item.benefit || item.reason}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
+
+            {toAvoid.length > 0 && (
+              <div>
+                <h4 className="text-xs font-black text-rose-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <AlertCircle size={14} /> Foods to Avoid
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {toAvoid.map((item: any, idx: number) => (
+                    <div key={idx} className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm">
+                      <h5 className="font-bold text-rose-800 text-sm mb-1">{item.food}</h5>
+                      <p className="text-xs text-slate-600 leading-tight">{item.reason || item.benefit}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
       )}

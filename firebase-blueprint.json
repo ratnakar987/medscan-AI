@@ -25,29 +25,51 @@
         "analysis": {
           "type": "object",
           "properties": {
-            "diagnosis": { "type": "string", "description": "AI-suggested diagnosis" },
-            "medicines": {
+            "potential_diagnosis_guess": { "type": "string", "description": "AI-suggested diagnosis" },
+            "holistic_summary": { "type": "string" },
+            "easy_explanation": { "type": "string" },
+            "key_findings": { "type": "array", "items": { "type": "string" } },
+            "health_insights": { "type": "array", "items": { "type": "string" } },
+            "precautions": { "type": "array", "items": { "type": "string" } },
+            "next_steps": { "type": "array", "items": { "type": "string" } },
+            "diet_recommendations": {
+              "type": "object",
+              "properties": {
+                "to_eat": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "food": { "type": "string" },
+                      "benefit": { "type": "string" }
+                    }
+                  }
+                },
+                "to_avoid": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "food": { "type": "string" },
+                      "reason": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            },
+            "medicine_list": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
                   "name": { "type": "string" },
                   "dosage": { "type": "string" },
-                  "purpose": { "type": "string" }
+                  "purpose": { "type": "string" },
+                  "timing": { "type": "string" },
+                  "frequency": { "type": "string" }
                 }
               }
-            },
-            "dietaryRecommendations": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "food": { "type": "string" },
-                  "benefit": { "type": "string" }
-                }
-              }
-            },
-            "summary": { "type": "string" }
+            }
           }
         },
         "createdAt": { "type": "string", "format": "date-time", "description": "When the report was created" }

@@ -94,7 +94,9 @@ service cloud.firestore {
              data.analysis is map &&
              (!('type' in data) || (data.type is string && data.type.size() < 100)) &&
              (!('fileName' in data) || (data.fileName is string && data.fileName.size() < 255)) &&
-             (!('fileUrl' in data) || (data.fileUrl is string && data.fileUrl.size() < 1000));
+             (!('fileUrl' in data) || (data.fileUrl is string && data.fileUrl.size() < 1000)) &&
+             // Basic size check for analysis map to prevent massive payloads
+             data.analysis.keys().size() < 50;
     }
 
     function isValidMedicine(data) {
