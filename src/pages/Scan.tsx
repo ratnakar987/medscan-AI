@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Camera, Upload, X, Loader2, CheckCircle2, FileText, Pill, Activity, AlertCircle, Info, ArrowRight, Heart, Thermometer, ShieldCheck, Stethoscope, Trash2 } from 'lucide-react';
 import { analyzeMedicalImages } from '../services/geminiService';
@@ -8,7 +8,8 @@ import { collection, addDoc, serverTimestamp, writeBatch, doc as firestoreDoc } 
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import CameraScanner from '../components/CameraScanner';
-import InterpretationView from '../components/InterpretationView';
+// Lazy load heavy component
+const InterpretationView = lazy(() => import('../components/InterpretationView'));
 import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
 import { compressImage } from '../utils/imageCompression';
 
@@ -345,7 +346,9 @@ const Scan: React.FC = () => {
               </div>
             )}
 
-            <InterpretationView report={analysisResult} />
+            <Suspense fallback={<div className="p-12 text-center bg-white rounded-[3rem] border border-slate-100 shadow-sm"><Loader2 className="animate-spin mx-auto text-primary mb-4" size={32} /><p className="text-slate-500 font-bold">Loading analysis view...</p></div>}>
+              <InterpretationView report={analysisResult} />
+            </Suspense>
 
             <div className="flex flex-col gap-3 mt-4">
               <button 

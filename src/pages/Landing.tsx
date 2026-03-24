@@ -82,11 +82,11 @@ const Landing: React.FC = () => {
               <span>Trusted by 10,000+ Users</span>
             </div>
             <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-[1.1] tracking-tight mb-8">
-              Stop Googling Your <br />
-              <span className="text-primary">Medical Reports.</span>
+              AI Medical Report <br />
+              <span className="text-primary">Analyzer.</span>
             </h1>
             <h2 className="text-3xl lg:text-4xl font-black text-slate-700 mb-8">
-              Understand Them Instantly with AI.
+              Understand Your Lab Results Instantly with AI.
             </h2>
             <p className="text-xl text-slate-500 mb-10 max-w-lg leading-relaxed font-bold">
               Upload your lab report or prescription and get clear explanations, health insights, and diet recommendations in seconds.
@@ -203,7 +203,7 @@ const Landing: React.FC = () => {
       <section id="how-it-works" className="py-32 px-6 bg-slate-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-sm font-black text-primary uppercase tracking-[0.3em] mb-4">See How It Works</h2>
+            <h2 className="text-sm font-black text-primary uppercase tracking-[0.3em] mb-4">How It Works</h2>
             <h3 className="text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">From Complexity to Clarity</h3>
           </div>
 

@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { collection, query, where, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { db, storage } from '../firebase';
 import { ref, deleteObject } from 'firebase/storage';
 import { useAuth } from '../context/AuthContext';
-import { FileText, ChevronRight, Search, Filter, Calendar, Trash2, Download, ExternalLink } from 'lucide-react';
+import { FileText, ChevronRight, Search, Filter, Calendar, Trash2, Download, ExternalLink, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import InterpretationView from '../components/InterpretationView';
+// Lazy load heavy component
+const InterpretationView = lazy(() => import('../components/InterpretationView'));
 import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
 
 const Reports: React.FC = () => {
@@ -201,7 +202,9 @@ const Reports: React.FC = () => {
                 </div>
 
                 <div className="bg-white rounded-[2.5rem] p-2 shadow-sm border border-slate-100">
-                  <InterpretationView report={selectedReport} />
+                  <Suspense fallback={<div className="p-12 text-center"><Loader2 className="animate-spin mx-auto text-primary mb-4" size={32} /><p className="text-slate-500 font-bold text-sm">Loading report details...</p></div>}>
+                    <InterpretationView report={selectedReport} />
+                  </Suspense>
                 </div>
                 
                 <div className="bg-slate-200/50 p-6 rounded-[2rem] text-center">
