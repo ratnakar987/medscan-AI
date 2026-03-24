@@ -36,7 +36,7 @@ const Register: React.FC = () => {
         createdAt: serverTimestamp(),
       });
 
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.message);
     } finally {
