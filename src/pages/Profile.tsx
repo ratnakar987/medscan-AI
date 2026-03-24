@@ -71,7 +71,7 @@ const Profile: React.FC = () => {
         <div className="relative">
           <div className="w-24 h-24 bg-secondary rounded-full flex items-center justify-center text-primary border-4 border-white shadow-lg overflow-hidden">
             {user?.photoURL ? (
-              <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+              <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" loading="lazy" decoding="async" />
             ) : (
               <User size={48} />
             )}

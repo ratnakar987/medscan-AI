@@ -188,7 +188,7 @@ const Login: React.FC = () => {
       </div>
 
       <button onClick={handleGoogleLogin} className="btn-secondary flex items-center justify-center gap-2 py-4">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" loading="lazy" decoding="async" />
         Google
       </button>
 

@@ -177,6 +177,8 @@ const Reports: React.FC = () => {
                       src={selectedReport.fileUrl} 
                       alt="Report Scan" 
                       className="w-full rounded-[2rem] border-4 border-white shadow-xl"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2rem] flex items-center justify-center">
                       <button 

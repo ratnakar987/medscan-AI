@@ -71,12 +71,30 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 }
 
 import cors from "cors";
+import compression from "compression";
 
 const app = express();
 const PORT = 3000;
 
+app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// Set cache headers for static assets in production
+if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+  const distPath = path.join(process.cwd(), "dist");
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath, {
+      maxAge: '1y', // Cache static assets for 1 year
+      immutable: true,
+      setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache'); // Don't cache HTML
+        }
+      }
+    }));
+  }
+}
 
 app.post("/api/upload", upload.single('file'), async (req: any, res: any) => {
   try {
@@ -160,7 +178,6 @@ async function setupVite() {
   } else if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
     const distPath = path.join(process.cwd(), "dist");
     if (fs.existsSync(distPath)) {
-      app.use(express.static(distPath));
       app.get("*", (req, res, next) => {
         if (req.path.startsWith('/api')) return next();
         res.sendFile(path.join(distPath, "index.html"));

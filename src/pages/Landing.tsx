@@ -325,7 +325,7 @@ const Landing: React.FC = () => {
                 <div className="flex -space-x-4">
                   {[1, 2, 3, 4].map(i => (
                     <div key={i} className="w-14 h-14 rounded-full border-4 border-slate-900 bg-slate-800 overflow-hidden">
-                      <img src={`https://picsum.photos/seed/face${i}/100/100`} alt="User" referrerPolicy="no-referrer" />
+                      <img src={`https://picsum.photos/seed/face${i}/100/100`} alt="User" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                     </div>
                   ))}
                 </div>

@@ -393,7 +393,7 @@ const Scan: React.FC = () => {
                           <p className="text-[10px] font-bold truncate px-2 w-full text-center">{(imageBlobs[index] as File)?.name}</p>
                         </div>
                       ) : (
-                        <img src={url} alt="Preview" className="w-full h-full object-cover" />
+                        <img src={url} alt="Preview" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                       )}
                       <button 
                         onClick={() => removeImage(index)}

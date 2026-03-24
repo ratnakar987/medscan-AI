@@ -93,7 +93,7 @@ const Dashboard: React.FC = () => {
         </div>
         <Link to="/profile" className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-primary border-4 border-white shadow-xl overflow-hidden">
           {user?.photoURL ? (
-            <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+            <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <Activity size={28} />
           )}
