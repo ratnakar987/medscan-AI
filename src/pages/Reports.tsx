@@ -69,49 +69,58 @@ const Reports: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">My Reports</h2>
-        <div className="bg-secondary p-2 rounded-xl text-primary">
+    <div className="flex flex-col gap-8 pb-8">
+      <div className="flex justify-between items-end px-1">
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Medical History</h2>
+          <p className="text-slate-500 font-bold text-sm">All your scans in one place.</p>
+        </div>
+        <div className="bg-white p-3 rounded-2xl text-primary shadow-sm border border-slate-100">
           <Filter size={20} />
         </div>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+      <div className="relative group">
+        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
         <input
           type="text"
-          placeholder="Search reports..."
-          className="input-field pl-12"
+          placeholder="Search by diagnosis or summary..."
+          className="w-full bg-white border-none rounded-[2rem] py-5 pl-14 pr-6 text-sm font-bold text-slate-700 shadow-sm focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         {filteredReports.map((report) => (
           <motion.div
             key={report.id}
             layoutId={report.id}
             onClick={() => setSelectedReport(report)}
-            className="card flex items-center gap-4 cursor-pointer active:scale-95 transition-transform"
+            className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex items-center gap-5 cursor-pointer hover:shadow-xl hover:border-primary/20 transition-all group"
           >
-            <div className="bg-secondary p-3 rounded-xl">
-              <FileText className="text-primary" size={24} />
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
+              <FileText size={32} />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-bold capitalize truncate">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                  {report.type?.replace('_', ' ') || 'Report'}
+                </span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  {report.createdAt?.toDate().toLocaleDateString()}
+                </span>
+              </div>
+              <h4 className="text-lg font-black text-slate-800 truncate">
                 {report.analysis?.potential_diagnosis_guess || report.fileName || 'Medical Report'}
               </h4>
-              <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+              <p className="text-xs text-slate-500 font-bold line-clamp-1 mt-1 opacity-80">
                 {report.analysis?.holistic_summary || report.summary || 'No summary available'}
               </p>
-              <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-1">
-                <Calendar size={10} />
-                {report.createdAt?.toDate().toLocaleDateString()}
-              </div>
             </div>
-            <ChevronRight className="text-slate-300" size={20} />
+            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+              <ChevronRight size={24} />
+            </div>
           </motion.div>
         ))}
 
@@ -136,57 +145,68 @@ const Reports: React.FC = () => {
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto p-6"
+              className="bg-slate-50 w-full max-w-2xl rounded-t-[3rem] sm:rounded-[3rem] max-h-[95vh] overflow-y-auto shadow-2xl"
               onClick={e => e.stopPropagation()}
             >
-              <div className="flex justify-between items-start mb-6">
+              <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-slate-100 p-6 flex justify-between items-center">
                 <div>
-                  <h3 className="text-xl font-bold capitalize">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                      {selectedReport.type?.replace('_', ' ') || 'Report'}
+                    </span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      {selectedReport.createdAt?.toDate().toLocaleString()}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900">
                     {selectedReport.analysis?.potential_diagnosis_guess || selectedReport.fileName || 'Medical Report'}
                   </h3>
-                  <p className="text-slate-500 text-sm">{selectedReport.createdAt?.toDate().toLocaleString()}</p>
                 </div>
                 <button 
                   onClick={() => setSelectedReport(null)}
-                  className="bg-slate-100 p-2 rounded-full text-slate-500"
+                  className="bg-slate-100 p-3 rounded-2xl text-slate-500 hover:bg-slate-200 transition-colors"
                 >
-                  <ChevronRight size={20} className="rotate-90" />
+                  <ChevronRight size={24} className="rotate-90" />
                 </button>
               </div>
 
-              <div className="flex flex-col gap-6">
+              <div className="p-6 flex flex-col gap-8">
                 {selectedReport.fileUrl && (
-                  <img 
-                    src={selectedReport.fileUrl} 
-                    alt="Report Scan" 
-                    className="w-full rounded-2xl border border-slate-100"
-                  />
+                  <div className="relative group">
+                    <img 
+                      src={selectedReport.fileUrl} 
+                      alt="Report Scan" 
+                      className="w-full rounded-[2rem] border-4 border-white shadow-xl"
+                    />
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2rem] flex items-center justify-center">
+                      <button 
+                        onClick={() => handleDownload(selectedReport.fileUrl)}
+                        className="bg-white text-slate-900 px-6 py-3 rounded-2xl font-black text-sm shadow-xl flex items-center gap-2"
+                      >
+                        <ExternalLink size={18} /> View Original
+                      </button>
+                    </div>
+                  </div>
                 )}
 
-                <div className="flex gap-3">
-                  {selectedReport.fileUrl && (
-                    <button 
-                      onClick={() => handleDownload(selectedReport.fileUrl)}
-                      className="flex-1 btn-secondary flex items-center justify-center gap-2 py-3"
-                    >
-                      <Download size={18} /> Download
-                    </button>
-                  )}
+                <div className="flex gap-4">
                   <button 
                     onClick={() => handleDelete(selectedReport)}
-                    className="flex-1 bg-red-50 text-red-500 rounded-xl font-medium flex items-center justify-center gap-2 py-3 hover:bg-red-100 transition-colors"
+                    className="flex-1 bg-rose-50 text-rose-600 rounded-2xl font-black flex items-center justify-center gap-2 py-4 hover:bg-rose-100 transition-colors text-sm"
                   >
-                    <Trash2 size={18} /> Delete
+                    <Trash2 size={18} /> Delete Report
                   </button>
                 </div>
 
-                <div className="mt-4">
+                <div className="bg-white rounded-[2.5rem] p-2 shadow-sm border border-slate-100">
                   <InterpretationView report={selectedReport} />
                 </div>
                 
-                <p className="text-[10px] text-slate-400 italic text-center">
-                  Disclaimer: This analysis is AI-generated and should not replace professional medical advice. Always consult with a doctor.
-                </p>
+                <div className="bg-slate-200/50 p-6 rounded-[2rem] text-center">
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
+                    Disclaimer: This analysis is AI-generated and should not replace professional medical advice. Always consult with a doctor.
+                  </p>
+                </div>
               </div>
             </motion.div>
           </motion.div>

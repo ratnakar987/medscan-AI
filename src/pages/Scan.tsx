@@ -417,43 +417,37 @@ const Scan: React.FC = () => {
               )}
             </div>
 
-            {/* Step-by-Step Guide */}
-            <div className="mt-8 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-              <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <ShieldCheck size={18} className="text-emerald-500" />
-                How your history is saved
-              </h3>
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-bold shrink-0">1</div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-700">Secure Upload</p>
-                    <p className="text-[10px] text-slate-500">Your document is encrypted and stored in our private medical cloud.</p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-bold shrink-0">2</div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-700">AI Processing</p>
-                    <p className="text-[10px] text-slate-500">Our medical-grade AI reads and interprets the document in seconds.</p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-bold shrink-0">3</div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-700">Database Entry</p>
-                    <p className="text-[10px] text-slate-500">A structured record is created in your personal history database.</p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-bold shrink-0">4</div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-700">Instant Access</p>
-                    <p className="text-[10px] text-slate-500">You can view your full medical history anytime from the Reports tab.</p>
-                  </div>
-                </div>
+      {/* Step-by-Step Guide */}
+      <section className="mt-12">
+        <div className="flex items-center gap-3 mb-6 px-1">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+            <ShieldCheck size={24} />
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">How it works</h3>
+            <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">Secure & Private</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-4">
+          {[
+            { title: 'Secure Upload', desc: 'Your document is encrypted and stored in our private medical cloud.', icon: <Upload size={18} /> },
+            { title: 'AI Processing', desc: 'Our medical-grade AI reads and interprets the document in seconds.', icon: <Activity size={18} /> },
+            { title: 'Database Entry', desc: 'A structured record is created in your personal history database.', icon: <FileText size={18} /> },
+            { title: 'Instant Access', desc: 'You can view your full medical history anytime from the Reports tab.', icon: <ArrowRight size={18} /> }
+          ].map((step, i) => (
+            <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex gap-5 items-start">
+              <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0 font-black text-sm">
+                {i + 1}
+              </div>
+              <div>
+                <p className="text-sm font-black text-slate-800 mb-1">{step.title}</p>
+                <p className="text-xs text-slate-500 font-bold leading-relaxed opacity-80">{step.desc}</p>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
           </motion.div>
         )}
       </AnimatePresence>

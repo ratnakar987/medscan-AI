@@ -51,6 +51,11 @@ interface InterpretationProps {
     confidence_level?: string;
     combined_symptoms?: string[];
     dietary_recommendations?: { food: string; benefit: string }[];
+    diet_recommendations?: { to_eat: { food: string; benefit: string }[]; to_avoid: { food: string; reason: string }[] };
+    key_findings?: string[];
+    health_insights?: string[];
+    precautions?: string[];
+    next_steps?: string[];
     reports_breakdown?: any[];
     main_findings?: string[];
     ai_analysis?: string;
@@ -58,7 +63,7 @@ interface InterpretationProps {
     lab_results?: LabResult[];
     imaging_details?: ImagingDetails;
     ecg_details?: EcgDetails;
-    analysis?: string; // JSON string fallback
+    analysis?: any; // Can be object or string
   };
 }
 
@@ -84,20 +89,26 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
 
   const summary = report.holistic_summary || report.summary || analysis.holistic_summary || analysis.summary;
   const easyExplanation = report.easy_explanation || analysis.easy_explanation;
-  const potentialSymptoms = report.combined_symptoms || report.potential_symptoms || analysis.combined_symptoms || analysis.potential_symptoms || [];
-  const mainFindings = report.main_findings || analysis.main_findings || [];
+  const keyFindings = report.key_findings || analysis.key_findings || report.main_findings || analysis.main_findings || [];
+  const healthInsights = report.health_insights || analysis.health_insights || [];
+  const precautions = report.precautions || analysis.precautions || [];
+  const nextSteps = report.next_steps || analysis.next_steps || analysis.recommendations || [];
   const medicines = report.medicine_list || analysis.medicine_list || analysis.medicines || [];
   const labResults = report.lab_results || analysis.lab_results || analysis.labResults || [];
   const imagingDetails = report.imaging_details || analysis.imaging_details;
   const ecgDetails = report.ecg_details || analysis.ecg_details;
   const aiAnalysis = report.ai_analysis || analysis.ai_analysis;
-  const recommendations = analysis.recommendations || [];
   const diagnosisGuess = report.potential_diagnosis_guess || analysis.potential_diagnosis_guess;
   const confidence = report.confidence_level || analysis.confidence_level;
   const breakdown = report.reports_breakdown || analysis.reports_breakdown;
   const healthStatus = report.overall_health_status || analysis.overall_health_status || 'Good';
   const urgency = report.urgency_level || analysis.urgency_level;
-  const dietaryRecommendations = report.dietary_recommendations || analysis.dietary_recommendations || [];
+  
+  const dietRecommendations = report.diet_recommendations || analysis.diet_recommendations || report.dietary_recommendations || analysis.dietary_recommendations || {};
+  const dietaryRecommendations = Array.isArray(dietRecommendations) ? dietRecommendations : (dietRecommendations.to_eat || []);
+  const recommendations = nextSteps;
+  const toEat = Array.isArray(dietRecommendations) ? dietRecommendations : (dietRecommendations.to_eat || []);
+  const toAvoid = dietRecommendations.to_avoid || [];
 
   const getStatusBg = (status: string) => {
     switch (status) {
@@ -158,91 +169,204 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className={`${getStatusBg(healthStatus)} text-white rounded-3xl p-6 shadow-xl relative overflow-hidden`}
+          className={`${getStatusBg(healthStatus)} text-white rounded-3xl p-8 shadow-xl relative overflow-hidden`}
         >
-          <div className="relative z-10 flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-              <Stethoscope size={24} />
-            </div>
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-80">Potential Diagnosis Guess</h3>
-              <p className="text-2xl font-black">{diagnosisGuess}</p>
-              {urgency && (
-                <p className="text-[10px] font-bold uppercase tracking-tighter mt-1 bg-white/20 inline-block px-2 py-0.5 rounded">
-                  Urgency: {urgency}
-                </p>
-              )}
-            </div>
-            {confidence && (
-              <div className="ml-auto bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-white/30">
-                {confidence}
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-md">
+                <Stethoscope size={32} />
               </div>
-            )}
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-80 mb-1">Potential Diagnosis</h3>
+                <p className="text-3xl font-black tracking-tight">{diagnosisGuess}</p>
+                <div className="flex items-center gap-4 mt-3">
+                  {urgency && (
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full border border-white/10">
+                      Urgency: {urgency}
+                    </span>
+                  )}
+                  {confidence && (
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full border border-white/10">
+                      Confidence: {confidence}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-2xl border border-white/10">
+              <Activity size={18} />
+              <span className="text-sm font-bold">Status: {healthStatus}</span>
+            </div>
           </div>
-          <Activity className="absolute -right-8 -bottom-8 text-white/5" size={160} />
+          <Activity className="absolute -right-8 -bottom-8 text-white/5" size={200} />
         </motion.div>
       )}
 
-      {/* Summary Section - Clean Utility Style */}
-      {(summary || mainFindings.length > 0) && (
+      {/* Summary & Explanation */}
+      <div className="grid lg:grid-cols-2 gap-6">
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100"
+          className="bg-slate-50 rounded-[2.5rem] p-8 border border-slate-100"
         >
-          <div className="flex items-center gap-2 mb-4 text-primary">
-            <div className="bg-primary/10 p-2 rounded-xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
               <FileText size={20} />
             </div>
-            <h3 className="font-bold text-lg">Report Summary</h3>
+            <h3 className="font-black text-xl text-slate-900">Summary</h3>
           </div>
-          
-          {summary && (
-            <p className="text-slate-700 leading-relaxed text-lg font-medium mb-4">
-              {summary}
-            </p>
-          )}
+          <p className="text-lg text-slate-700 leading-relaxed font-medium">
+            {summary}
+          </p>
+        </motion.div>
 
-          {easyExplanation && (
-            <div className="mb-6 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-              <p className="text-sm text-emerald-800 leading-relaxed italic">
-                <span className="font-bold not-italic">Simple Explanation: </span>
-                {easyExplanation}
-              </p>
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-emerald-50 rounded-[2.5rem] p-8 border border-emerald-100"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
+              <Info size={20} />
             </div>
-          )}
+            <h3 className="font-black text-xl text-emerald-900">Simple Explanation</h3>
+          </div>
+          <p className="text-lg text-emerald-800 leading-relaxed font-medium italic">
+            "{easyExplanation}"
+          </p>
+        </motion.div>
+      </div>
 
-          {potentialSymptoms.length > 0 && (
-            <div className="mb-6">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
-                <AlertCircle size={14} className="text-amber-500" />
-                {report.combined_symptoms ? 'Combined Symptoms' : 'Potential Symptoms'}
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {potentialSymptoms.map((symptom: string, idx: number) => (
-                  <span key={idx} className="text-xs font-medium bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-100">
-                    {symptom}
-                  </span>
-                ))}
+      {/* Key Findings & Insights */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {keyFindings.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm"
+          >
+            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Key Findings</h4>
+            <div className="space-y-4">
+              {keyFindings.map((finding: string, idx: number) => (
+                <div key={idx} className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="mt-1 w-2 h-2 rounded-full bg-primary shrink-0" />
+                  <p className="text-sm font-bold text-slate-700 leading-relaxed">{finding}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {healthInsights.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm"
+          >
+            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Health Insights</h4>
+            <div className="space-y-4">
+              {healthInsights.map((insight: string, idx: number) => (
+                <div key={idx} className="flex items-start gap-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                  <div className="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                  <p className="text-sm font-bold text-slate-700 leading-relaxed">{insight}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Diet Recommendations */}
+      {(toEat.length > 0 || toAvoid.length > 0) && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm"
+        >
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
+              <Heart size={24} />
+            </div>
+            <h3 className="font-black text-2xl text-slate-900">Diet Recommendations</h3>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {toEat.length > 0 && (
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 mb-4 flex items-center gap-2">
+                  <CheckCircle2 size={14} /> Foods to Eat
+                </h4>
+                <div className="space-y-3">
+                  {toEat.map((item: any, idx: number) => (
+                    <div key={idx} className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                      <p className="text-sm font-black text-emerald-900 mb-1">{item.food || item.name}</p>
+                      <p className="text-xs text-emerald-700/80 font-medium">{item.reason || item.benefit}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {mainFindings.length > 0 && (
-            <div className="bg-slate-50 rounded-2xl p-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Key Findings</h4>
-              <ul className="space-y-2">
-                {mainFindings.map((finding: string, idx: number) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm text-slate-600">
-                    <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                    {finding}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {toAvoid.length > 0 && (
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-rose-600 mb-4 flex items-center gap-2">
+                  <AlertCircle size={14} /> Foods to Avoid
+                </h4>
+                <div className="space-y-3">
+                  {toAvoid.map((item: any, idx: number) => (
+                    <div key={idx} className="p-4 bg-rose-50/50 rounded-2xl border border-rose-100">
+                      <p className="text-sm font-black text-rose-900 mb-1">{item.food || item.name}</p>
+                      <p className="text-xs text-rose-700/80 font-medium">{item.reason || item.benefit}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </motion.div>
       )}
+
+      {/* Precautions & Next Steps */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {precautions.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-amber-50 rounded-[2.5rem] p-8 border border-amber-100"
+          >
+            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-amber-600 mb-6">Precautions</h4>
+            <ul className="space-y-4">
+              {precautions.map((item: string, idx: number) => (
+                <li key={idx} className="flex items-start gap-3 text-sm font-bold text-amber-900/80">
+                  <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+
+        {nextSteps.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-primary/5 rounded-[2.5rem] p-8 border border-primary/10"
+          >
+            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-6">Next Steps</h4>
+            <ul className="space-y-4">
+              {nextSteps.map((item: string, idx: number) => (
+                <li key={idx} className="flex items-start gap-3 text-sm font-bold text-slate-700">
+                  <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </div>
 
       {/* Reports Breakdown */}
       {breakdown && breakdown.length > 0 && (

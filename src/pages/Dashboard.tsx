@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
-import { Pill, FileText, Plus, ChevronRight, Activity, Camera, Heart, Scan as ScanIcon } from 'lucide-react';
+import { Pill, FileText, Plus, ChevronRight, Activity, Camera, Heart, Scan as ScanIcon, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
@@ -88,84 +88,84 @@ const Dashboard: React.FC = () => {
       {/* Top Section */}
       <section className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Welcome, {user?.displayName?.split(' ')[0] || 'User'}</h2>
-          <p className="text-slate-500 text-sm">Your health at a glance</p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Hello, {user?.displayName?.split(' ')[0] || 'User'}</h2>
+          <p className="text-slate-500 font-bold text-sm">Your health dashboard is ready.</p>
         </div>
-        <Link to="/profile" className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-primary border-2 border-white shadow-sm overflow-hidden">
+        <Link to="/profile" className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-primary border-4 border-white shadow-xl overflow-hidden">
           {user?.photoURL ? (
             <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
           ) : (
-            <Activity size={24} />
+            <Activity size={28} />
           )}
         </Link>
       </section>
 
+      {/* Pro Plan Banner */}
+      <section className="bg-gradient-to-r from-primary to-emerald-600 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-primary/20 relative overflow-hidden group">
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-widest mb-4">
+            <Zap size={12} className="fill-white" />
+            <span>Limited Time Offer</span>
+          </div>
+          <h3 className="text-2xl font-black mb-2">Upgrade to RXDecode Pro</h3>
+          <p className="text-white/80 text-sm font-bold mb-6 max-w-[200px]">Get unlimited reports, detailed diet plans, and PDF downloads.</p>
+          <button className="bg-white text-primary px-6 py-3 rounded-2xl text-sm font-black shadow-xl shadow-black/10 hover:scale-105 transition-transform active:scale-95">
+            Upgrade Now
+          </button>
+        </div>
+        <Activity className="absolute -right-10 -bottom-10 text-white/10 group-hover:scale-110 transition-transform duration-700" size={200} />
+      </section>
+
       {/* Main Action Buttons */}
       <section className="grid grid-cols-2 gap-4">
-        <Link to="/scan?type=prescription" className="card flex flex-col items-center justify-center gap-3 py-6 hover:bg-secondary/30 transition-colors group border-emerald-100 bg-emerald-50/30">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform shadow-sm">
-            <Pill size={24} />
+        <Link to="/scan?type=lab_report" className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-4 hover:shadow-xl hover:border-primary/20 transition-all group">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+            <Activity size={32} />
           </div>
-          <span className="text-sm font-bold text-slate-700 text-center">Scan Prescription</span>
+          <span className="text-sm font-black text-slate-800">Scan Report</span>
         </Link>
-        <Link to="/scan?type=lab_report" className="card flex flex-col items-center justify-center gap-3 py-6 hover:bg-secondary/30 transition-colors group border-blue-100 bg-blue-50/30">
-          <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform shadow-sm">
-            <Activity size={24} />
+        <Link to="/scan?type=prescription" className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-4 hover:shadow-xl hover:border-emerald-500/20 transition-all group">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+            <Pill size={32} />
           </div>
-          <span className="text-sm font-bold text-slate-700 text-center">Scan Lab Report</span>
-        </Link>
-        <Link to="/reports" className="card flex flex-col items-center justify-center gap-3 py-6 hover:bg-secondary/30 transition-colors group">
-          <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
-            <FileText size={24} />
-          </div>
-          <span className="text-sm font-bold text-slate-700 text-center">Medical History</span>
-        </Link>
-        <Link to="/medicines" className="card flex flex-col items-center justify-center gap-3 py-6 hover:bg-secondary/30 transition-colors group">
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform">
-            <Pill size={24} />
-          </div>
-          <span className="text-sm font-bold text-slate-700 text-center">Medicine Guide</span>
+          <span className="text-sm font-black text-slate-800">Scan Prescription</span>
         </Link>
       </section>
 
-      {/* Latest Report Analysis */}
+      {/* Health Status Overview */}
       {latestReport && (
         <section className="flex flex-col gap-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-bold text-slate-800">Medical Insights</h3>
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">AI Powered</span>
+          <div className="flex justify-between items-center px-1">
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">Health Status</h3>
+            <span className="text-[10px] font-black text-primary bg-primary/10 px-3 py-1 rounded-full uppercase tracking-widest">Live Analysis</span>
           </div>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="card bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none p-6 relative overflow-hidden shadow-xl"
+            className={`rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden ${
+              latestReport.analysis?.overall_health_status === 'Critical' ? 'bg-rose-600' :
+              latestReport.analysis?.overall_health_status === 'Attention Needed' ? 'bg-amber-500' :
+              'bg-emerald-600'
+            }`}
           >
             <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-3">
-                <div className={`p-2 rounded-lg ${getReportColor(latestReport.type)} bg-opacity-20`}>
-                  {getReportIcon(latestReport.type)}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                  <Heart size={24} />
                 </div>
-                <h4 className="text-lg font-bold capitalize">{latestReport.type?.replace('_', ' ')}</h4>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Overall Status</p>
+                  <h4 className="text-2xl font-black">{latestReport.analysis?.overall_health_status || 'Stable'}</h4>
+                </div>
               </div>
-              <p className="text-sm leading-relaxed opacity-90 font-medium">
-                {latestReport.analysis?.holistic_summary || latestReport.summary || "No summary available for this report."}
+              <p className="text-sm font-bold leading-relaxed opacity-90 mb-8 line-clamp-2">
+                {latestReport.analysis?.holistic_summary || "No summary available for this report."}
               </p>
-              
-              {latestReport.main_findings && latestReport.main_findings.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {latestReport.main_findings.slice(0, 2).map((finding: string, i: number) => (
-                    <span key={i} className="text-[10px] bg-white/10 border border-white/20 px-2 py-1 rounded-md">
-                      {finding}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <Link to={`/reports`} className="inline-flex items-center gap-2 text-xs font-bold mt-6 text-primary-foreground/80 hover:text-white transition-colors">
-                View Full Analysis <ChevronRight size={14} />
+              <Link to="/reports" className="inline-flex items-center gap-2 text-sm font-black bg-white/20 px-6 py-3 rounded-2xl hover:bg-white/30 transition-all">
+                View Full Details <ChevronRight size={18} />
               </Link>
             </div>
-            <Activity className="absolute -right-8 -bottom-8 text-white/5" size={160} />
+            <Activity className="absolute -right-12 -bottom-12 text-white/5" size={240} />
           </motion.div>
         </section>
       )}

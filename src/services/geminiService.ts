@@ -10,38 +10,33 @@ export const analyzeMedicalImages = async (images: { base64: string, mimeType: s
   const model = "gemini-3-flash-preview";
   
   const prompt = `
-    You are a Senior Medical Diagnostic Engine. You are provided with one or more medical documents belonging to the same patient.
+    You are a Senior Medical Diagnostic Engine for "RXDecode AI". Your task is to analyze one or more medical documents (lab reports, prescriptions, etc.) and provide a comprehensive, patient-friendly interpretation.
     
     TASK:
-    1. Analyze ALL provided documents together.
-    2. Provide a HOLISTIC summary of the patient's health based on all documents.
-    3. Extract key findings from each document.
-    4. GUESS the potential disease or condition based on the symptoms, lab results, and prescriptions found across ALL documents.
-    5. Provide a patient-friendly explanation.
-    6. Suggest specific dietary recommendations (fruits, vegetables, etc.) that help manage or reduce the identified condition, with a short explanation for each.
+    1. Analyze ALL provided documents together for a holistic view.
+    2. Identify KEY FINDINGS (especially abnormal values or critical observations).
+    3. Provide a SIMPLE EXPLANATION of what these findings mean in plain language.
+    4. Provide HEALTH INSIGHTS (potential underlying conditions or trends).
+    5. Suggest DIET RECOMMENDATIONS (specific foods to eat and avoid) to manage the identified condition.
+    6. List PRECAUTIONS and NEXT STEPS (e.g., follow-up tests, lifestyle changes).
+    7. GUESS the potential disease or condition based on the findings.
 
-    JSON ONLY:
+    JSON ONLY OUTPUT:
     {
       "overall_health_status": "Critical|Attention Needed|Stable|Good",
       "urgency_level": "Immediate|Within 24h|Routine",
-      "holistic_summary": "Overall summary of the patient's condition across all reports",
+      "holistic_summary": "A professional summary of the patient's condition across all reports",
       "potential_diagnosis_guess": "The most likely disease or condition based on findings",
       "confidence_level": "Low|Medium|High",
-      "easy_explanation": "Simple explanation for the patient",
-      "combined_symptoms": ["symptom 1", "symptom 2"],
-      "dietary_recommendations": [
-        {
-          "food": "Name of fruit/veg/food",
-          "benefit": "Short explanation of why it helps"
-        }
-      ],
-      "reports_breakdown": [
-        {
-          "type": "prescription|lab_report|...",
-          "summary": "summary of this specific doc",
-          "findings": ["finding 1", "finding 2"]
-        }
-      ],
+      "easy_explanation": "A very simple, empathetic explanation for the patient",
+      "key_findings": ["Finding 1: Detail", "Finding 2: Detail"],
+      "health_insights": ["Insight 1", "Insight 2"],
+      "diet_recommendations": {
+        "to_eat": [{"food": "...", "reason": "..."}],
+        "to_avoid": [{"food": "...", "reason": "..."}]
+      },
+      "precautions": ["Precaution 1", "Precaution 2"],
+      "next_steps": ["Step 1", "Step 2"],
       "medicine_list": [{"name": "...", "dosage": "...", "timing": "...", "purpose": "...", "simple_explanation": "..."}],
       "lab_results": [{"parameter": "...", "value": "...", "unit": "...", "min_ref": 0, "max_ref": 0, "status": "Low|Normal|High", "explanation": "..."}]
     }
