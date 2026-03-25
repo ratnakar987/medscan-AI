@@ -241,19 +241,19 @@ const Scan: React.FC = () => {
           
           console.log("Starting background Firestore persistence...");
           
-          // Prepare Reports
-          for (const img of uploadedImages) {
-            const reportDocRef = firestoreDoc(reportsCollection);
-            const reportData = {
-              userId: user.uid,
-              fileName: (img.blob as File).name || `report_${img.reportId}.${img.extension}`,
-              fileUrl: img.fileUrl,
-              type: analysis.reports_breakdown?.[0]?.type || 'medical_report',
-              analysis: analysis,
-              createdAt: serverTimestamp(),
-            };
-            batch.set(reportDocRef, reportData);
-          }
+          // Prepare ONE Report for the entire scan
+          const reportDocRef = firestoreDoc(reportsCollection);
+          const reportId = reportDocRef.id;
+          
+          const reportData = {
+            userId: user.uid,
+            fileNames: uploadedImages.map(img => (img.blob as File).name || `report_${img.reportId}.${img.extension}`),
+            fileUrls: uploadedImages.map(img => img.fileUrl),
+            type: analysis.reports_breakdown?.[0]?.type || 'medical_report',
+            analysis: analysis,
+            createdAt: serverTimestamp(),
+          };
+          batch.set(reportDocRef, reportData);
 
           // Prepare Medicines
           const medicineList = analysis.medicine_list || analysis.medicines || [];
@@ -261,6 +261,7 @@ const Scan: React.FC = () => {
             const medDocRef = firestoreDoc(medicinesCollection);
             const medData = {
               userId: user.uid,
+              reportId: reportId, // Link to the report
               medicine_name: med.name || 'Unknown Medicine',
               dosage: med.dosage || 'Not specified',
               timing: med.timing || 'Not specified',
@@ -292,7 +293,7 @@ const Scan: React.FC = () => {
   return (
     <div className="flex flex-col gap-6 min-h-[80vh] pb-20">
       <div className="text-center">
-        <h2 className="text-2xl font-bold">{analysisResult ? 'Analysis Result' : getTitle()}</h2>
+        <h1 className="text-2xl font-bold">{analysisResult ? 'Analysis Result' : getTitle()}</h1>
         <p className="text-slate-500">
           {analysisResult 
             ? 'Here is what our AI found in your document' 

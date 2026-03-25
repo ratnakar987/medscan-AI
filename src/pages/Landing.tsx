@@ -46,9 +46,9 @@ const Landing: React.FC = () => {
             <span className="text-xl font-black tracking-tight text-slate-900">RXDecode</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#how-it-works" className="text-sm font-black text-slate-500 hover:text-primary transition-colors">How it Works</a>
-            <a href="#features" className="text-sm font-black text-slate-500 hover:text-primary transition-colors">Features</a>
-            <a href="#faq" className="text-sm font-black text-slate-500 hover:text-primary transition-colors">FAQ</a>
+            <a href="#how-it-works" className="text-sm font-black text-slate-600 hover:text-primary transition-colors">How it Works</a>
+            <a href="#features" className="text-sm font-black text-slate-600 hover:text-primary transition-colors">Features</a>
+            <a href="#faq" className="text-sm font-black text-slate-600 hover:text-primary transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-4">
             {user ? (
@@ -57,7 +57,7 @@ const Landing: React.FC = () => {
               </Link>
             ) : (
               <>
-                <Link to="/login" className="text-sm font-black text-slate-500 hover:text-primary transition-colors">Login</Link>
+                <Link to="/login" className="text-sm font-black text-slate-600 hover:text-primary transition-colors">Login</Link>
                 <Link to="/register" className="bg-primary text-white px-6 py-3 rounded-2xl text-sm font-black shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
                   Get Started
                 </Link>
@@ -82,13 +82,13 @@ const Landing: React.FC = () => {
               <span>Trusted by 10,000+ Users</span>
             </div>
             <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-[1.1] tracking-tight mb-8">
-              AI Medical Report <br />
-              <span className="text-primary">Analyzer.</span>
+              Stop Googling <br />
+              <span className="text-primary">Your Report.</span>
             </h1>
             <h2 className="text-3xl lg:text-4xl font-black text-slate-700 mb-8">
               Understand Your Lab Results Instantly with AI.
             </h2>
-            <p className="text-xl text-slate-500 mb-10 max-w-lg leading-relaxed font-bold">
+            <p className="text-xl text-slate-700 mb-10 max-w-lg leading-relaxed font-bold">
               Upload your lab report or prescription and get clear explanations, health insights, and diet recommendations in seconds.
             </p>
             
@@ -121,12 +121,12 @@ const Landing: React.FC = () => {
               <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-slate-100 rotate-[-2deg] relative z-20">
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400">
+                    <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600">
                       <FileText size={18} />
                     </div>
                     <span className="text-xs font-black text-slate-900">Blood_Report_01.pdf</span>
                   </div>
-                  <span className="text-[10px] font-black text-slate-400">1.2 MB</span>
+                  <span className="text-[10px] font-black text-slate-600">1.2 MB</span>
                 </div>
                 <div className="space-y-3">
                   <div className="h-3 w-full bg-slate-50 rounded-full"></div>
@@ -146,8 +146,8 @@ const Landing: React.FC = () => {
                     <Zap size={20} className="fill-white" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-80">AI Analysis</p>
-                    <h4 className="text-lg font-black">Key Findings</h4>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/90">AI Analysis</p>
+                    <h3 className="text-lg font-black">Key Findings</h3>
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -155,18 +155,18 @@ const Landing: React.FC = () => {
                     <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                       <CheckCircle2 size={12} />
                     </div>
-                    <p className="text-xs font-bold leading-relaxed">Hemoglobin levels are slightly below normal range (11.2 g/dL).</p>
+                    <p className="text-xs font-bold leading-relaxed text-white">Hemoglobin levels are slightly below normal range (11.2 g/dL).</p>
                   </div>
                   <div className="flex gap-3 items-start">
                     <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                       <Pill size={12} />
                     </div>
-                    <p className="text-xs font-bold leading-relaxed">Iron deficiency detected. Consider iron-rich supplements.</p>
+                    <p className="text-xs font-bold leading-relaxed text-white">Iron deficiency detected. Consider iron-rich supplements.</p>
                   </div>
                 </div>
                 <div className="mt-8 pt-6 border-t border-white/10">
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">Diet Suggestion</p>
-                  <p className="text-xs font-bold italic">"Increase spinach and red meat intake..."</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/80 mb-2">Diet Suggestion</p>
+                  <p className="text-xs font-bold italic text-white">"Increase spinach and red meat intake..."</p>
                 </div>
               </div>
             </div>
@@ -216,24 +216,24 @@ const Landing: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xl font-black text-slate-900">Raw Medical Data</h4>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Confusing & Technical</p>
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-widest">Confusing & Technical</p>
                 </div>
               </div>
-              <div className="flex-1 space-y-6 opacity-60">
+              <div className="flex-1 space-y-6">
                 <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-xs font-mono text-slate-500">WBC Count: 11.5 x 10^3/uL [Ref: 4.5-11.0]</p>
+                  <p className="text-xs font-mono text-slate-700">WBC Count: 11.5 x 10^3/uL [Ref: 4.5-11.0]</p>
                   <div className="h-1.5 w-full bg-slate-200 rounded-full mt-2">
                     <div className="h-full w-[85%] bg-rose-400 rounded-full"></div>
                   </div>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-xs font-mono text-slate-500">Neutrophils: 78% [Ref: 40-70]</p>
+                  <p className="text-xs font-mono text-slate-700">Neutrophils: 78% [Ref: 40-70]</p>
                   <div className="h-1.5 w-full bg-slate-200 rounded-full mt-2">
                     <div className="h-full w-[90%] bg-rose-400 rounded-full"></div>
                   </div>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-xs font-mono text-slate-500">CRP: 12.4 mg/L [Ref: &lt;3.0]</p>
+                  <p className="text-xs font-mono text-slate-700">CRP: 12.4 mg/L [Ref: &lt;3.0]</p>
                   <div className="h-1.5 w-full bg-slate-200 rounded-full mt-2">
                     <div className="h-full w-[95%] bg-rose-400 rounded-full"></div>
                   </div>
@@ -253,7 +253,7 @@ const Landing: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-xl font-black">RXDecode Analysis</h4>
-                    <p className="text-xs font-black text-white/60 uppercase tracking-widest">Clear & Actionable</p>
+                    <p className="text-xs font-black text-white/80 uppercase tracking-widest">Clear & Actionable</p>
                   </div>
                 </div>
                 <div className="flex-1 space-y-6">
@@ -261,19 +261,19 @@ const Landing: React.FC = () => {
                     <h5 className="text-sm font-black mb-2 flex items-center gap-2">
                       <AlertCircle size={16} /> Key Findings
                     </h5>
-                    <p className="text-xs font-bold opacity-90">Signs of acute bacterial infection detected based on elevated WBC and CRP levels.</p>
+                    <p className="text-xs font-bold text-white">Signs of acute bacterial infection detected based on elevated WBC and CRP levels.</p>
                   </div>
                   <div className="p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10">
                     <h5 className="text-sm font-black mb-2 flex items-center gap-2">
                       <Info size={16} /> Simple Explanation
                     </h5>
-                    <p className="text-xs font-bold opacity-90">Your body is currently fighting an infection. This is why your white blood cell count is high.</p>
+                    <p className="text-xs font-bold text-white">Your body is currently fighting an infection. This is why your white blood cell count is high.</p>
                   </div>
                   <div className="p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10">
                     <h5 className="text-sm font-black mb-2 flex items-center gap-2">
                       <Pill size={16} /> Diet Suggestions
                     </h5>
-                    <p className="text-xs font-bold opacity-90">Increase Vitamin C intake and stay hydrated to support your immune system.</p>
+                    <p className="text-xs font-bold text-white">Increase Vitamin C intake and stay hydrated to support your immune system.</p>
                   </div>
                 </div>
                 <div className="mt-8 p-4 bg-white/20 rounded-2xl text-center backdrop-blur-md">
@@ -306,7 +306,7 @@ const Landing: React.FC = () => {
                   {feature.icon}
                 </div>
                 <h4 className="text-xl font-black text-slate-900 mb-4">{feature.title}</h4>
-                <p className="text-slate-500 font-bold text-sm leading-relaxed">{feature.desc}</p>
+                <p className="text-slate-700 font-bold text-sm leading-relaxed">{feature.desc}</p>
               </div>
             ))}
           </div>
@@ -320,7 +320,7 @@ const Landing: React.FC = () => {
             <div>
               <h2 className="text-sm font-black text-primary uppercase tracking-[0.3em] mb-4">Social Proof</h2>
               <h3 className="text-4xl lg:text-6xl font-black tracking-tight mb-8">Trusted by thousands of patients.</h3>
-              <p className="text-xl text-slate-400 font-bold mb-12">Join the growing community of people taking control of their health data.</p>
+              <p className="text-xl text-slate-300 font-bold mb-12">Join the growing community of people taking control of their health data.</p>
               <div className="flex items-center gap-6">
                 <div className="flex -space-x-4">
                   {[1, 2, 3, 4].map(i => (
@@ -331,7 +331,7 @@ const Landing: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-lg font-black">4.9/5 Rating</p>
-                  <p className="text-sm font-bold text-slate-500">Based on 2,000+ reviews</p>
+                  <p className="text-sm font-bold text-slate-400">Based on 2,000+ reviews</p>
                 </div>
               </div>
             </div>
@@ -342,7 +342,7 @@ const Landing: React.FC = () => {
                   <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-black">R</div>
                   <div>
                     <p className="text-lg font-black">Rahul Sharma</p>
-                    <p className="text-sm font-bold text-slate-500">New Delhi, India</p>
+                    <p className="text-sm font-bold text-slate-400">New Delhi, India</p>
                   </div>
                 </div>
               </div>
@@ -352,7 +352,7 @@ const Landing: React.FC = () => {
                   <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 font-black">P</div>
                   <div>
                     <p className="text-lg font-black">Priya Kapoor</p>
-                    <p className="text-sm font-bold text-slate-500">Mumbai, India</p>
+                    <p className="text-sm font-bold text-slate-400">Mumbai, India</p>
                   </div>
                 </div>
               </div>
@@ -378,13 +378,13 @@ const Landing: React.FC = () => {
             ].map((faq, i) => (
               <details key={i} className="group bg-slate-50 rounded-[2rem] border border-slate-100 open:bg-white open:shadow-xl transition-all">
                 <summary className="p-8 cursor-pointer flex justify-between items-center list-none">
-                  <h4 className="text-lg font-black text-slate-900">{faq.q}</h4>
+                  <h3 className="text-lg font-black text-slate-900">{faq.q}</h3>
                   <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-slate-400 group-open:rotate-180 transition-transform shadow-sm">
                     <ChevronRight size={20} className="rotate-90" />
                   </div>
                 </summary>
                 <div className="px-8 pb-8">
-                  <p className="text-slate-500 font-bold leading-relaxed">{faq.a}</p>
+                  <p className="text-slate-700 font-bold leading-relaxed">{faq.a}</p>
                 </div>
               </details>
             ))}
@@ -403,21 +403,21 @@ const Landing: React.FC = () => {
                 </div>
                 <span className="text-2xl font-black tracking-tight text-slate-900">RXDecode</span>
               </div>
-              <p className="text-slate-500 max-w-sm font-bold leading-relaxed mb-8">
+              <p className="text-slate-700 max-w-sm font-bold leading-relaxed mb-8">
                 Empowering patients with instant medical report clarity through advanced AI technology. Trusted, private, and secure.
               </p>
               <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-slate-400 hover:text-primary transition-colors cursor-pointer shadow-sm">
+                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-slate-600 hover:text-primary transition-colors cursor-pointer shadow-sm">
                   <Globe size={20} />
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-slate-400 hover:text-primary transition-colors cursor-pointer shadow-sm">
+                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-slate-600 hover:text-primary transition-colors cursor-pointer shadow-sm">
                   <Smartphone size={20} />
                 </div>
               </div>
             </div>
             <div>
               <h5 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-8">Product</h5>
-              <ul className="space-y-4 text-sm font-bold text-slate-500">
+              <ul className="space-y-4 text-sm font-bold text-slate-700">
                 <li><a href="#features" className="hover:text-primary transition-colors">Features</a></li>
                 <li><a href="#how-it-works" className="hover:text-primary transition-colors">How it Works</a></li>
                 <li><Link to="/register" className="hover:text-primary transition-colors">Pricing</Link></li>
@@ -425,7 +425,7 @@ const Landing: React.FC = () => {
             </div>
             <div>
               <h5 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-8">Legal</h5>
-              <ul className="space-y-4 text-sm font-bold text-slate-500">
+              <ul className="space-y-4 text-sm font-bold text-slate-700">
                 <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Disclaimer</a></li>
@@ -436,12 +436,12 @@ const Landing: React.FC = () => {
           <div className="p-8 bg-white rounded-[2rem] border border-slate-200 mb-12">
             <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500">
+                <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-primary">
                   <ShieldCheck size={24} />
                 </div>
                 <div>
                   <p className="text-sm font-black text-slate-900">100% Private & Secure</p>
-                  <p className="text-xs font-bold text-slate-400">Your data is encrypted and never stored.</p>
+                  <p className="text-xs font-bold text-slate-600">Your data is encrypted and never stored.</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -456,8 +456,8 @@ const Landing: React.FC = () => {
           </div>
 
           <div className="pt-12 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-sm font-bold text-slate-400">© 2026 RXDecode AI. All rights reserved.</p>
-            <p className="text-sm font-bold text-slate-400">Always consult a doctor before making health decisions.</p>
+            <p className="text-sm font-bold text-slate-600">© 2026 RXDecode AI. All rights reserved.</p>
+            <p className="text-sm font-bold text-slate-600">Always consult a doctor before making health decisions.</p>
           </div>
         </div>
       </footer>

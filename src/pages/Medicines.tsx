@@ -52,7 +52,7 @@ const Medicines: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Medicine Guide</h2>
+        <h1 className="text-2xl font-bold">Medicine Guide</h1>
         <div className="bg-blue-50 p-2 rounded-xl text-blue-500">
           <Pill size={20} />
         </div>
@@ -81,7 +81,7 @@ const Medicines: React.FC = () => {
               <Pill className="text-blue-500" size={24} />
             </div>
             <div className="flex-1">
-              <h4 className="font-bold text-slate-800">{med.medicine_name}</h4>
+              <h3 className="font-bold text-slate-800">{med.medicine_name}</h3>
               <p className="text-xs text-slate-500 line-clamp-1">{med.use}</p>
             </div>
             <ChevronRight className="text-slate-300" size={20} />

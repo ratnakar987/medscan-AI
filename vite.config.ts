@@ -10,12 +10,26 @@ export default defineConfig(({mode}) => {
     build: {
       minify: 'terser',
       cssMinify: true,
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
-            'vendor-ui': ['lucide-react', 'motion'],
+          manualChunks: (id) => {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                return 'vendor-react';
+              }
+              if (id.includes('firebase')) {
+                return 'vendor-firebase';
+              }
+              if (id.includes('lucide-react') || id.includes('motion')) {
+                return 'vendor-ui';
+              }
+              return 'vendor';
+            }
+            // Merge small utils into the main bundle to reduce requests
+            if (id.includes('/src/utils/')) {
+              return 'utils';
+            }
           },
         },
       },

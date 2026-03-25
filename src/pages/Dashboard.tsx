@@ -88,7 +88,7 @@ const Dashboard: React.FC = () => {
       {/* Top Section */}
       <section className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Hello, {user?.displayName?.split(' ')[0] || 'User'}</h2>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Hello, {user?.displayName?.split(' ')[0] || 'User'}</h1>
           <p className="text-slate-500 font-bold text-sm">Your health dashboard is ready.</p>
         </div>
         <Link to="/profile" className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-primary border-4 border-white shadow-xl overflow-hidden">
@@ -196,7 +196,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
-                    <h4 className="font-bold text-slate-800 leading-tight">{med.name}</h4>
+                    <h4 className="font-bold text-slate-800 leading-tight">{med.medicine_name}</h4>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{med.timing || med.frequency}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-1 font-medium">{med.dosage}</p>

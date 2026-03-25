@@ -120,7 +120,7 @@ const Profile: React.FC = () => {
                 exit={{ opacity: 0, y: -5 }}
               >
                 <div className="flex items-center justify-center gap-2">
-                  <h2 className="text-xl font-bold">{userData?.displayName || user?.displayName || 'User'}</h2>
+                  <h1 className="text-xl font-bold">{userData?.displayName || user?.displayName || 'User'}</h1>
                   <button onClick={() => setIsEditing(true)} className="text-slate-400 hover:text-primary">
                     <Edit2 size={14} />
                   </button>

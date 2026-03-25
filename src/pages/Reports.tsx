@@ -53,8 +53,13 @@ const Reports: React.FC = () => {
       // 1. Delete from Firestore
       await deleteDoc(doc(db, 'reports', report.id));
       
-      // 2. Delete from Storage if URL exists
-      if (report.fileUrl) {
+      // 2. Delete from Storage if URLs exist
+      if (report.fileUrls && Array.isArray(report.fileUrls)) {
+        for (const url of report.fileUrls) {
+          const storageRef = ref(storage, url);
+          await deleteObject(storageRef).catch(err => console.error('Storage delete error:', err));
+        }
+      } else if (report.fileUrl) {
         const storageRef = ref(storage, report.fileUrl);
         await deleteObject(storageRef).catch(err => console.error('Storage delete error:', err));
       }
@@ -73,7 +78,7 @@ const Reports: React.FC = () => {
     <div className="flex flex-col gap-8 pb-8">
       <div className="flex justify-between items-end px-1">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Medical History</h2>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Medical History</h1>
           <p className="text-slate-500 font-bold text-sm">All your scans in one place.</p>
         </div>
         <div className="bg-white p-3 rounded-2xl text-primary shadow-sm border border-slate-100">
@@ -112,9 +117,9 @@ const Reports: React.FC = () => {
                   {report.createdAt?.toDate().toLocaleDateString()}
                 </span>
               </div>
-              <h4 className="text-lg font-black text-slate-800 truncate">
-                {report.analysis?.potential_diagnosis_guess || report.fileName || 'Medical Report'}
-              </h4>
+              <h3 className="text-lg font-black text-slate-800 truncate">
+                {report.analysis?.potential_diagnosis_guess || report.fileName || (report.fileNames && report.fileNames[0]) || 'Medical Report'}
+              </h3>
               <p className="text-xs text-slate-500 font-bold line-clamp-1 mt-1 opacity-80">
                 {report.analysis?.holistic_summary || report.summary || 'No summary available'}
               </p>
@@ -172,25 +177,26 @@ const Reports: React.FC = () => {
               </div>
 
               <div className="p-6 flex flex-col gap-8">
-                {selectedReport.fileUrl && (
-                  <div className="relative group">
+                {/* Support both old single fileUrl and new fileUrls array */}
+                {(selectedReport.fileUrls || (selectedReport.fileUrl ? [selectedReport.fileUrl] : [])).map((url: string, idx: number) => (
+                  <div key={idx} className="relative group">
                     <img 
-                      src={selectedReport.fileUrl} 
-                      alt="Report Scan" 
+                      src={url} 
+                      alt={`Report Scan ${idx + 1}`} 
                       className="w-full rounded-[2rem] border-4 border-white shadow-xl"
                       loading="lazy"
                       decoding="async"
                     />
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2rem] flex items-center justify-center">
                       <button 
-                        onClick={() => handleDownload(selectedReport.fileUrl)}
+                        onClick={() => handleDownload(url)}
                         className="bg-white text-slate-900 px-6 py-3 rounded-2xl font-black text-sm shadow-xl flex items-center gap-2"
                       >
                         <ExternalLink size={18} /> View Original
                       </button>
                     </div>
                   </div>
-                )}
+                ))}
 
                 <div className="flex gap-4">
                   <button 

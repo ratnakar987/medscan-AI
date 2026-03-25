@@ -20,8 +20,8 @@
       "properties": {
         "id": { "type": "string", "description": "Unique ID for the report" },
         "userId": { "type": "string", "description": "UID of the user who owns this report" },
-        "fileName": { "type": "string", "description": "Name of the uploaded file" },
-        "fileUrl": { "type": "string", "description": "URL of the file in Firebase Storage" },
+        "fileNames": { "type": "array", "items": { "type": "string" }, "description": "Names of the uploaded files" },
+        "fileUrls": { "type": "array", "items": { "type": "string" }, "description": "URLs of the files in Firebase Storage" },
         "analysis": {
           "type": "object",
           "properties": {
