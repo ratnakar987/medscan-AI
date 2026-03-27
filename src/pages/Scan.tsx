@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Camera, Upload, X, Loader2, CheckCircle2, FileText, Pill, Activity, AlertCircle, Info, ArrowRight, Heart, Thermometer, ShieldCheck, Stethoscope, Trash2 } from 'lucide-react';
 import { analyzeMedicalImages } from '../services/geminiService';
-import { storage, db } from '../firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp, writeBatch, doc as firestoreDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -200,21 +199,28 @@ const Scan: React.FC = () => {
       
       // 2. Start Storage Uploads in parallel with Gemini
       const storageUploadPromises = processedImages.map(async (img) => {
-        const reportId = Math.random().toString(36).substring(2, 15);
-        const extension = img.mimeType.split('/')[1] || 'jpg';
-        const storagePath = `medical_reports/${user.uid}/${reportId}.${extension}`;
-        const storageRef = ref(storage, storagePath);
-        
-        console.log(`Uploading to storage (parallel): ${storagePath}`);
+        const formData = new FormData();
+        formData.append('file', img.blob, (img.blob as File).name || 'report.jpg');
+        formData.append('userId', user.uid);
+
+        console.log(`Uploading to server proxy: /api/upload`);
         try {
-          await uploadBytes(storageRef, img.blob);
-          const fileUrl = await getDownloadURL(storageRef);
-          console.log(`Upload successful (parallel): ${fileUrl}`);
-          return { ...img, fileUrl, reportId, extension };
-        } catch (storageErr: any) {
-          console.error(`Storage upload failed for ${storagePath}:`, storageErr);
-          // Fallback to a placeholder if storage fails, so we still save the analysis
-          return { ...img, fileUrl: 'https://picsum.photos/seed/medical/800/600', reportId, extension };
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(`Server upload failed with status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log(`Upload successful via proxy: ${data.imageUrl}`);
+          return { ...img, fileUrl: data.imageUrl, reportId: data.reportId, extension: img.mimeType.split('/')[1] || 'jpg' };
+        } catch (uploadErr: any) {
+          console.error(`Upload failed via proxy:`, uploadErr);
+          // Fallback to a placeholder if upload fails, so we still save the analysis
+          return { ...img, fileUrl: 'https://picsum.photos/seed/medical/800/600', reportId: Math.random().toString(36).substring(2, 15), extension: img.mimeType.split('/')[1] || 'jpg' };
         }
       });
 

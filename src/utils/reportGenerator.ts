@@ -68,15 +68,15 @@ export const downloadPDF = async (elementId: string, fileName: string) => {
 
   try {
     // Use toPng to capture the element as an image
-    // We use a slightly lower quality and higher pixel ratio for a good balance of size and clarity
+    // We use high quality and pixel ratio for a professional, sharp look
     const dataUrl = await toPng(element, {
-      quality: 0.95,
+      quality: 1.0,
       pixelRatio: 2,
       backgroundColor: '#ffffff',
+      cacheBust: true,
       style: {
         borderRadius: '0',
         margin: '0',
-        padding: '20px', // Add some internal padding for the PDF look
       }
     });
     
@@ -89,14 +89,16 @@ export const downloadPDF = async (elementId: string, fileName: string) => {
     const imgHeight = (img.height * pdfWidth) / img.width;
     
     // Create a PDF with a custom page size that fits the entire content on one page
-    // This prevents text and cards from being cut in half between pages.
+    // This prevents text and cards from being cut in half between pages, 
+    // which is essential for a professional medical report.
     const pdf = new jsPDF({
       orientation: 'p',
       unit: 'mm',
-      format: [pdfWidth, imgHeight]
+      format: [pdfWidth, imgHeight],
+      compress: true
     });
     
-    pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, imgHeight, undefined, 'FAST');
+    pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, imgHeight, undefined, 'SLOW');
     pdf.save(`${fileName}.pdf`);
   } catch (error) {
     console.error('PDF generation failed:', error);

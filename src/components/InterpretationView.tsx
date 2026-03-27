@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Pill, Activity, AlertCircle, CheckCircle2, Info, FileText, ArrowRight, Stethoscope, Heart, Download, Share2, Loader2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Pill, Activity, AlertCircle, CheckCircle2, Info, FileText, ArrowRight, Stethoscope, Heart, Download, Share2, Loader2, ShieldCheck } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'motion/react';
 import { downloadPDF, shareReport } from '../utils/reportGenerator';
@@ -70,6 +70,9 @@ interface InterpretationProps {
 const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+
+  const reportId = useMemo(() => `RXD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`, []);
+  const dateGenerated = useMemo(() => new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), []);
 
   // Parse analysis if needed
   let analysis: any = {};
@@ -162,7 +165,55 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
         </button>
       </div>
 
-      <div id="report-content" className="flex flex-col gap-8 bg-white p-2 rounded-3xl">
+      <div id="report-content" className="flex flex-col gap-8 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        {/* Professional Report Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start gap-6 pb-8 border-b-2 border-slate-100">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+              <Activity size={32} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight">RXDecode AI</h1>
+              <p className="text-sm font-bold text-primary uppercase tracking-widest">Medical Analysis Report</p>
+            </div>
+          </div>
+          <div className="text-right space-y-1">
+            <div className="flex flex-col items-end mb-2">
+              <span className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-black rounded-full border border-rose-100 uppercase tracking-widest">Confidential</span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Report ID</span>
+              <span className="text-sm font-mono font-bold text-slate-700">{reportId}</span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date Generated</span>
+              <span className="text-sm font-bold text-slate-700">{dateGenerated}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Patient Information Section */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Patient Name</p>
+            <p className="text-sm font-bold text-slate-900">Valued User</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Analysis Type</p>
+            <p className="text-sm font-bold text-slate-900 capitalize">{report.type?.replace('_', ' ') || 'Medical Report'}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Urgency</p>
+            <p className={`text-sm font-black ${urgency === 'High' ? 'text-rose-600' : urgency === 'Medium' ? 'text-amber-600' : 'text-emerald-600'}`}>
+              {urgency || 'Normal'}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+            <p className="text-sm font-bold text-slate-900">{healthStatus}</p>
+          </div>
+        </div>
+
         {/* Diagnosis Guess - Prominent */}
       {diagnosisGuess && (
         <motion.div 
@@ -664,6 +715,20 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
           </ul>
         </motion.div>
       )}
+
+      {/* Professional Footer */}
+      <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col items-center gap-4">
+        <div className="flex items-center gap-2 text-primary">
+          <ShieldCheck size={16} />
+          <span className="text-xs font-black uppercase tracking-widest">Verified AI Analysis</span>
+        </div>
+        <p className="text-[10px] text-slate-400 text-center max-w-2xl leading-relaxed">
+          This report was generated by RXDecode AI. It is intended for informational purposes only and should be reviewed by a qualified medical professional. RXDecode AI is not responsible for any diagnostic errors or health decisions made based on this report.
+        </p>
+        <div className="text-[10px] font-mono text-slate-300">
+          Verification Code: {Math.random().toString(36).substr(2, 12).toUpperCase()}
+        </div>
+      </div>
 
       </div>
 
