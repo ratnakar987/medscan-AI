@@ -165,7 +165,7 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
         </button>
       </div>
 
-      <div id="report-content" className="flex flex-col gap-8 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+      <div id="report-content" className="flex flex-col gap-8 bg-white p-4 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden break-words">
         {/* Professional Report Header */}
         <div className="flex flex-col md:flex-row justify-between items-start gap-6 pb-8 border-b-2 border-slate-100">
           <div className="flex items-center gap-4">
@@ -193,7 +193,7 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
         </div>
 
         {/* Patient Information Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 p-4 md:p-6 bg-slate-50 rounded-2xl md:rounded-3xl border border-slate-100">
           <div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Patient Name</p>
             <p className="text-sm font-bold text-slate-900">Valued User</p>
@@ -228,8 +228,8 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
               </div>
               <div>
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-80 mb-1">Potential Diagnosis</h3>
-                <p className="text-3xl font-black tracking-tight">{diagnosisGuess}</p>
-                <div className="flex items-center gap-4 mt-3">
+                <p className="text-2xl md:text-3xl font-black tracking-tight break-words">{diagnosisGuess}</p>
+                <div className="flex flex-wrap items-center gap-2 md:gap-4 mt-3">
                   {urgency && (
                     <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full border border-white/10">
                       Urgency: {urgency}
@@ -257,7 +257,7 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-50 rounded-[2.5rem] p-8 border border-slate-100"
+          className="bg-slate-50 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100"
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
@@ -265,7 +265,7 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
             </div>
             <h3 className="font-black text-xl text-slate-900">Summary</h3>
           </div>
-          <p className="text-lg text-slate-700 leading-relaxed font-medium">
+          <p className="text-base md:text-lg text-slate-700 leading-relaxed font-medium break-words">
             {summary}
           </p>
         </motion.div>
@@ -274,7 +274,7 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-emerald-50 rounded-[2.5rem] p-8 border border-emerald-100"
+          className="bg-emerald-50 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 border border-emerald-100"
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
@@ -282,7 +282,7 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
             </div>
             <h3 className="font-black text-xl text-emerald-900">Simple Explanation</h3>
           </div>
-          <p className="text-lg text-emerald-800 leading-relaxed font-medium italic">
+          <p className="text-base md:text-lg text-emerald-800 leading-relaxed font-medium italic break-words">
             "{easyExplanation}"
           </p>
         </motion.div>
@@ -294,14 +294,14 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm"
+            className="bg-white rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm"
           >
             <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Key Findings</h4>
             <div className="space-y-4">
               {keyFindings.map((finding: string, idx: number) => (
                 <div key={idx} className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                   <div className="mt-1 w-2 h-2 rounded-full bg-primary shrink-0" />
-                  <p className="text-sm font-bold text-slate-700 leading-relaxed">{finding}</p>
+                  <p className="text-sm font-bold text-slate-700 leading-relaxed break-words">{finding}</p>
                 </div>
               ))}
             </div>
@@ -313,14 +313,14 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm"
+            className="bg-white rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm"
           >
             <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Health Insights</h4>
             <div className="space-y-4">
               {healthInsights.map((insight: string, idx: number) => (
                 <div key={idx} className="flex items-start gap-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
                   <div className="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                  <p className="text-sm font-bold text-slate-700 leading-relaxed">{insight}</p>
+                  <p className="text-sm font-bold text-slate-700 leading-relaxed break-words">{insight}</p>
                 </div>
               ))}
             </div>
@@ -463,14 +463,14 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
           {imagingDetails.impressions && (
             <div className="mb-4">
               <h4 className="text-sm font-bold text-slate-700 mb-1">Clinical Impressions</h4>
-              <p className="text-slate-600 text-sm leading-relaxed">{imagingDetails.impressions}</p>
+              <p className="text-slate-600 text-sm leading-relaxed break-words">{imagingDetails.impressions}</p>
             </div>
           )}
           
           {imagingDetails.observations && (
             <div>
               <h4 className="text-sm font-bold text-slate-700 mb-1">Key Observations</h4>
-              <p className="text-slate-600 text-sm leading-relaxed">{imagingDetails.observations}</p>
+              <p className="text-slate-600 text-sm leading-relaxed break-words">{imagingDetails.observations}</p>
             </div>
           )}
         </motion.div>
@@ -508,7 +508,7 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
           {ecgDetails.interpretation && (
             <div>
               <h4 className="text-sm font-bold text-slate-700 mb-1">Interpretation</h4>
-              <p className="text-slate-600 text-sm leading-relaxed">{ecgDetails.interpretation}</p>
+              <p className="text-slate-600 text-sm leading-relaxed break-words">{ecgDetails.interpretation}</p>
             </div>
           )}
         </motion.div>
@@ -599,10 +599,10 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
             <h3 className="font-bold text-lg">Lab Parameters & Results</h3>
           </div>
           <div className="bg-slate-900 rounded-3xl overflow-hidden shadow-xl border border-slate-800">
-            <div className="grid grid-cols-[1.5fr_1fr_1fr] gap-4 p-4 bg-slate-800/50 border-bottom border-slate-700 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <div className="grid grid-cols-2 xs:grid-cols-[1.5fr_1fr_1fr] gap-2 md:gap-4 p-3 md:p-4 bg-slate-800/50 border-bottom border-slate-700 text-[10px] font-bold uppercase tracking-widest text-slate-400">
               <div>Parameter</div>
               <div className="text-center">Value</div>
-              <div className="text-right">Reference</div>
+              <div className="hidden xs:block text-right">Reference</div>
             </div>
             <div className="flex flex-col">
               {labResults.map((res: LabResult, idx: number) => {
@@ -613,14 +613,15 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
                 
                 return (
                   <div key={idx} className="flex flex-col border-t border-slate-800 hover:bg-slate-800/30 transition-colors">
-                    <div className="grid grid-cols-[1.5fr_1fr_1fr] gap-4 p-4 items-center">
-                      <div className="font-medium text-slate-200 text-sm">
+                    <div className="grid grid-cols-2 xs:grid-cols-[1.5fr_1fr_1fr] gap-2 md:gap-4 p-3 md:p-4 items-center">
+                      <div className="font-medium text-slate-200 text-xs md:text-sm break-words">
                         {res.parameter || res.testName}
+                        <div className="xs:hidden text-[9px] text-slate-500 mt-1">Ref: {res.referenceRange || '--'}</div>
                       </div>
-                      <div className={`text-center font-mono text-base ${isAbnormal ? 'text-rose-400 font-bold' : 'text-emerald-400'}`}>
+                      <div className={`text-center font-mono text-sm md:text-base ${isAbnormal ? 'text-rose-400 font-bold' : 'text-emerald-400'}`}>
                         {res.value}
                       </div>
-                      <div className="text-right font-mono text-xs text-slate-500">
+                      <div className="hidden xs:block text-right font-mono text-xs text-slate-500">
                         {res.referenceRange || '--'}
                       </div>
                     </div>
