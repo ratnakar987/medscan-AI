@@ -14,6 +14,9 @@ const Reports = lazy(() => import('./pages/Reports'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Medicines = lazy(() => import('./pages/Medicines'));
 const Disclaimer = lazy(() => import('./pages/Disclaimer'));
+const About = lazy(() => import('./pages/About'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/Terms'));
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -38,6 +41,9 @@ export default function App() {
                 <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
                 <Route path="/medicines" element={<PrivateRoute><Medicines /></PrivateRoute>} />
                 <Route path="/disclaimer" element={<Disclaimer />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
               </Route>
             </Routes>
           </Suspense>

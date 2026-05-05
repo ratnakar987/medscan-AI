@@ -92,7 +92,7 @@ const Landing: React.FC = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <Link to={user ? "/scan" : "/register"} className="w-full sm:w-auto bg-primary text-white px-10 py-5 rounded-[2rem] text-xl font-black flex items-center justify-center gap-3 group shadow-2xl shadow-primary/30 hover:scale-105 transition-transform">
+              <Link to={user ? "/scan" : "/register"} className="w-full sm:w-auto bg-[#007BFF] text-white px-10 py-5 rounded-[2rem] text-xl font-black flex items-center justify-center gap-3 group shadow-2xl shadow-[#007BFF]/30 hover:scale-105 transition-all">
                 Upload Report <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
               </Link>
               <button className="w-full sm:w-auto bg-white text-slate-900 border-2 border-slate-100 px-10 py-5 rounded-[2rem] text-xl font-black hover:bg-slate-50 transition-colors">
@@ -100,14 +100,28 @@ const Landing: React.FC = () => {
               </button>
             </div>
 
-            <div className="mt-12 p-6 bg-amber-50 rounded-2xl border-l-4 border-amber-400 flex gap-4 items-start shadow-sm">
-              <AlertCircle size={24} className="text-amber-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-black text-amber-900 mb-1">Medical Disclaimer</p>
-                <p className="text-xs font-bold text-amber-800 leading-relaxed">
-                  RxDecode provides informational summaries only. It does not diagnose, treat, or prescribe. Seek professional medical advice for health decisions. <strong>Not a diagnosis or doctor replacement—always consult your physician.</strong>
-                </p>
+            <div className="mt-12 p-8 bg-amber-50 rounded-[2.5rem] border-l-[12px] border-amber-400 shadow-xl shadow-amber-900/5 relative overflow-hidden">
+              <div className="relative z-10">
+                <div className="flex gap-5 items-start">
+                  <AlertCircle size={32} className="text-amber-500 shrink-0 mt-1" />
+                  <div>
+                    <h4 className="text-lg font-black text-amber-900 mb-2 uppercase tracking-wide">Not Medical Advice — Informational Only</h4>
+                    <p className="text-sm font-bold text-amber-800 leading-relaxed mb-4">
+                      RxDecode is an AI-powered informational tool. It generates summaries to help you understand terminology. 
+                      <span className="text-rose-600"> It does not diagnose, treat, or prescribe. Always consult a qualified physician.</span>
+                    </p>
+                    <div className="flex flex-wrap gap-4 pt-4 border-t border-amber-200">
+                      <div className="flex items-center gap-2 text-[10px] font-black text-amber-900/50 uppercase tracking-widest">
+                        <Lock size={12} /> Files Deleted after 24h
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] font-black text-amber-900/50 uppercase tracking-widest">
+                        <ShieldCheck size={12} /> India DPDP Compliant
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
             </div>
           </motion.div>
 
@@ -492,12 +506,12 @@ const Landing: React.FC = () => {
             <span className="text-xl font-black tracking-tight">RxDecode</span>
           </div>
 
-          <p className="text-slate-400 font-bold mb-6">
+            <p className="text-slate-400 font-bold mb-6">
             &copy; 2026 RxDecode. All rights reserved. | 
-            <Link to="/disclaimer" className="mx-2 hover:text-white transition-colors">Privacy</Link> | 
-            <Link to="/disclaimer" className="mx-2 hover:text-white transition-colors">Terms</Link> | 
+            <Link to="/privacy" className="mx-2 hover:text-white transition-colors">Privacy</Link> | 
+            <Link to="/terms" className="mx-2 hover:text-white transition-colors">Terms</Link> | 
             <Link to="/disclaimer" className="mx-2 hover:text-white transition-colors">Disclaimer</Link> | 
-            <a href="#about" className="mx-2 hover:text-white transition-colors">About</a> | 
+            <Link to="/about" className="mx-2 hover:text-white transition-colors">About</Link> | 
             <a href="mailto:hello@rxdecode.com" className="mx-2 hover:text-white transition-colors">hello@rxdecode.com</a>
           </p>
 
