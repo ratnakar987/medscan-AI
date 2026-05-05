@@ -20,6 +20,7 @@ import {
   Info,
   Heart,
   Download,
+  Stethoscope,
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -48,6 +49,7 @@ const Landing: React.FC = () => {
           <div className="hidden md:flex items-center gap-8">
             <a href="#how-it-works" className="text-sm font-black text-slate-600 hover:text-primary transition-colors">How it Works</a>
             <a href="#features" className="text-sm font-black text-slate-600 hover:text-primary transition-colors">Features</a>
+            <a href="#about" className="text-sm font-black text-slate-600 hover:text-primary transition-colors">About Us</a>
             <a href="#faq" className="text-sm font-black text-slate-600 hover:text-primary transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-4">
@@ -79,17 +81,14 @@ const Landing: React.FC = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black mb-8 uppercase tracking-widest border border-emerald-100">
               <ShieldCheck size={14} />
-              <span>Trusted by 10,000+ Users</span>
+              <span>100% Private & Secure | Reports deleted after analysis</span>
             </div>
-            <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-[1.1] tracking-tight mb-8">
-              Stop Googling <br />
-              <span className="text-primary">Your Report.</span>
+            <h1 className="text-4xl lg:text-6xl font-black text-slate-900 leading-[1.1] tracking-tight mb-8">
+              RxDecode: <br />
+              <span className="text-primary">Understand your doctor’s prescription in 10 seconds.</span>
             </h1>
-            <h2 className="text-3xl lg:text-4xl font-black text-slate-700 mb-8">
-              Understand Your Lab Results Instantly with AI.
-            </h2>
             <p className="text-xl text-slate-700 mb-10 max-w-lg leading-relaxed font-bold">
-              Upload your lab report or prescription and get clear explanations, health insights, and diet recommendations in seconds.
+              Upload your prescription or lab report. Get plain-language explanations, key insights, and next steps.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -97,15 +96,18 @@ const Landing: React.FC = () => {
                 Upload Report <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
               </Link>
               <button className="w-full sm:w-auto bg-white text-slate-900 border-2 border-slate-100 px-10 py-5 rounded-[2rem] text-xl font-black hover:bg-slate-50 transition-colors">
-                See Demo
+                Try Demo (Free Sample)
               </button>
             </div>
 
-            <div className="mt-12 p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3 items-start">
-              <AlertCircle size={20} className="text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-[10px] font-bold text-amber-700 leading-relaxed">
-                ⚠️ This tool provides AI-generated insights and is not a substitute for professional medical advice. Always consult a doctor before making health decisions.
-              </p>
+            <div className="mt-12 p-6 bg-amber-50 rounded-2xl border-l-4 border-amber-400 flex gap-4 items-start shadow-sm">
+              <AlertCircle size={24} className="text-amber-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-black text-amber-900 mb-1">Medical Disclaimer</p>
+                <p className="text-xs font-bold text-amber-800 leading-relaxed">
+                  RxDecode provides informational summaries only. It does not diagnose, treat, or prescribe. Seek professional medical advice for health decisions. <strong>Not a diagnosis or doctor replacement—always consult your physician.</strong>
+                </p>
+              </div>
             </div>
           </motion.div>
 
@@ -203,81 +205,88 @@ const Landing: React.FC = () => {
       <section id="how-it-works" className="py-32 px-6 bg-slate-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-sm font-black text-primary uppercase tracking-[0.3em] mb-4">How It Works</h2>
-            <h3 className="text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">From Complexity to Clarity</h3>
+            <h2 className="text-sm font-black text-primary uppercase tracking-[0.3em] mb-4">See It in Action</h2>
+            <h3 className="text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">From Confusion to Clarity</h3>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-12 items-stretch">
-            {/* Complexity Side */}
+          <div className="grid lg:grid-cols-2 gap-8 items-stretch">
+            {/* Before Side */}
             <div className="bg-white rounded-[3rem] p-10 border border-slate-200 shadow-sm flex flex-col">
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500">
+                <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400">
                   <FileText size={28} />
                 </div>
                 <div>
-                  <h4 className="text-xl font-black text-slate-900">Raw Medical Data</h4>
-                  <p className="text-xs font-bold text-slate-600 uppercase tracking-widest">Confusing & Technical</p>
+                  <h4 className="text-xl font-black text-slate-900">Before: Confusing Report</h4>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Medical Jargon & Numbers</p>
                 </div>
               </div>
-              <div className="flex-1 space-y-6">
-                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-xs font-mono text-slate-700">WBC Count: 11.5 x 10^3/uL [Ref: 4.5-11.0]</p>
-                  <div className="h-1.5 w-full bg-slate-200 rounded-full mt-2">
-                    <div className="h-full w-[85%] bg-rose-400 rounded-full"></div>
-                  </div>
-                </div>
-                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-xs font-mono text-slate-700">Neutrophils: 78% [Ref: 40-70]</p>
-                  <div className="h-1.5 w-full bg-slate-200 rounded-full mt-2">
-                    <div className="h-full w-[90%] bg-rose-400 rounded-full"></div>
-                  </div>
-                </div>
-                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-xs font-mono text-slate-700">CRP: 12.4 mg/L [Ref: &lt;3.0]</p>
-                  <div className="h-1.5 w-full bg-slate-200 rounded-full mt-2">
-                    <div className="h-full w-[95%] bg-rose-400 rounded-full"></div>
-                  </div>
-                </div>
+              <div className="flex-1 flex flex-center items-center justify-center p-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <p className="text-lg font-mono text-slate-600 text-center italic">
+                  "HbA1c: 7.2%, LDL: 140 mg/dL, SGPT elevated..."
+                </p>
               </div>
-              <div className="mt-8 p-4 bg-rose-50 rounded-2xl text-center">
-                <p className="text-xs font-black text-rose-600">"What does this mean? Am I okay?"</p>
+              <div className="mt-8 text-center">
+                <p className="text-xs font-bold text-slate-400 italic">Example of a typical technical report.</p>
               </div>
             </div>
 
-            {/* Clarity Side */}
-            <div className="bg-primary rounded-[3rem] p-10 text-white shadow-2xl shadow-primary/20 flex flex-col relative overflow-hidden">
+            {/* After Side */}
+            <div className="bg-emerald-600 rounded-[3rem] p-10 text-white shadow-2xl shadow-emerald-200 flex flex-col relative overflow-hidden">
               <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-8">
                   <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
                     <Zap size={28} className="fill-white" />
                   </div>
                   <div>
-                    <h4 className="text-xl font-black">RXDecode Analysis</h4>
-                    <p className="text-xs font-black text-white/80 uppercase tracking-widest">Clear & Actionable</p>
+                    <h4 className="text-xl font-black">After: Clear Decode</h4>
+                    <p className="text-xs font-black text-white/80 uppercase tracking-widest">Simple & Actionable Insights</p>
                   </div>
                 </div>
-                <div className="flex-1 space-y-6">
+                <div className="space-y-6">
                   <div className="p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10">
-                    <h5 className="text-sm font-black mb-2 flex items-center gap-2">
-                      <AlertCircle size={16} /> Key Findings
-                    </h5>
-                    <p className="text-xs font-bold text-white">Signs of acute bacterial infection detected based on elevated WBC and CRP levels.</p>
-                  </div>
-                  <div className="p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10">
-                    <h5 className="text-sm font-black mb-2 flex items-center gap-2">
-                      <Info size={16} /> Simple Explanation
-                    </h5>
-                    <p className="text-xs font-bold text-white">Your body is currently fighting an infection. This is why your white blood cell count is high.</p>
-                  </div>
-                  <div className="p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10">
-                    <h5 className="text-sm font-black mb-2 flex items-center gap-2">
-                      <Pill size={16} /> Diet Suggestions
-                    </h5>
-                    <p className="text-xs font-bold text-white">Increase Vitamin C intake and stay hydrated to support your immune system.</p>
+                    <ul className="space-y-4">
+                      <li className="flex gap-3">
+                        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                          <Activity size={12} />
+                        </div>
+                        <p className="text-sm font-bold leading-tight">
+                          <span className="block text-xs uppercase opacity-70 mb-0.5">Sugar Control:</span>
+                          HbA1c 7.2% means moderate diabetes control—talk diet with doctor.
+                        </p>
+                      </li>
+                      <li className="flex gap-3">
+                        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                          <Heart size={12} />
+                        </div>
+                        <p className="text-sm font-bold leading-tight">
+                          <span className="block text-xs uppercase opacity-70 mb-0.5">Cholesterol:</span>
+                          LDL high; may need lifestyle changes or meds.
+                        </p>
+                      </li>
+                      <li className="flex gap-3">
+                        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                          <Stethoscope size={12} />
+                        </div>
+                        <p className="text-sm font-bold leading-tight">
+                          <span className="block text-xs uppercase opacity-70 mb-0.5">Liver:</span>
+                          SGPT up—check for fatty liver causes.
+                        </p>
+                      </li>
+                      <li className="flex gap-3">
+                        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-emerald-300">
+                          <CheckCircle2 size={12} />
+                        </div>
+                        <p className="text-sm font-black leading-tight text-emerald-100">
+                          <span className="block text-xs uppercase opacity-70 mb-0.5">Next Steps:</span>
+                          Follow up in 3 months.
+                        </p>
+                      </li>
+                    </ul>
                   </div>
                 </div>
-                <div className="mt-8 p-4 bg-white/20 rounded-2xl text-center backdrop-blur-md">
-                  <p className="text-xs font-black">"I understand now. I'll talk to my doctor about the infection."</p>
+                <div className="mt-8 text-center italic text-sm text-white/60">
+                  Demo only. Real results vary by your upload.
                 </div>
               </div>
               <Activity className="absolute -right-20 -bottom-20 text-white/5" size={400} />
@@ -392,73 +401,113 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="pt-32 pb-12 px-6 bg-slate-50 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-16 mb-24">
-            <div className="lg:col-span-2">
-              <div className="flex items-center gap-2 mb-8">
-                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white">
-                  <Activity size={24} />
-                </div>
-                <span className="text-2xl font-black tracking-tight text-slate-900">RXDecode</span>
-              </div>
-              <p className="text-slate-700 max-w-sm font-bold leading-relaxed mb-8">
-                Empowering patients with instant medical report clarity through advanced AI technology. Trusted, private, and secure.
+      {/* About Section */}
+      <section id="about" className="py-32 px-6 bg-slate-50 overflow-hidden relative">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-sm font-black text-primary uppercase tracking-[0.3em] mb-4">About Us</h2>
+              <h3 className="text-4xl lg:text-5xl font-black text-slate-900 tracking-tight mb-8">Making Health Records Accessible to Everyone</h3>
+              <p className="text-lg text-slate-700 font-bold leading-relaxed mb-6">
+                RxDecode is built by <strong>Ratnakar Shukla</strong>, a startup founder from Prayagraj, Uttar Pradesh, passionate about making medical reports easy to understand for everyone.
               </p>
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-slate-600 hover:text-primary transition-colors cursor-pointer shadow-sm">
-                  <Globe size={20} />
+              <p className="text-slate-600 font-medium leading-relaxed mb-8">
+                Our mission is to decode complex prescriptions and lab results into simple English and Hindi explanations using state-of-the-art AI. No more confusion over medical jargon or technical numbers.
+              </p>
+              
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div className="p-6 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-4">
+                    <Heart size={20} />
+                  </div>
+                  <h4 className="text-sm font-black text-slate-900 mb-2">Our Mission</h4>
+                  <p className="text-xs text-slate-500 font-bold">Bridging the gap between complex medical data and patient understanding.</p>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-slate-600 hover:text-primary transition-colors cursor-pointer shadow-sm">
-                  <Smartphone size={20} />
+                <div className="p-6 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                  <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4">
+                    <ShieldCheck size={20} />
+                  </div>
+                  <h4 className="text-sm font-black text-slate-900 mb-2">The Team</h4>
+                  <p className="text-xs text-slate-500 font-bold">Solo founder with AI and healthcare tech experience. Backed by secure Amazon hosting.</p>
                 </div>
               </div>
-            </div>
-            <div>
-              <h5 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-8">Product</h5>
-              <ul className="space-y-4 text-sm font-bold text-slate-700">
-                <li><a href="#features" className="hover:text-primary transition-colors">Features</a></li>
-                <li><a href="#how-it-works" className="hover:text-primary transition-colors">How it Works</a></li>
-                <li><Link to="/register" className="hover:text-primary transition-colors">Pricing</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-8">Legal</h5>
-              <ul className="space-y-4 text-sm font-bold text-slate-700">
-                <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Disclaimer</a></li>
-              </ul>
-            </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-xl"
+            >
+              <h4 className="text-2xl font-black text-slate-900 mb-8">Contact & Details</h4>
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 shrink-0">
+                    <Globe size={24} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Email Information</p>
+                    <a href="mailto:hello@rxdecode.com" className="text-lg font-bold text-slate-700 hover:text-primary transition-colors">hello@rxdecode.com</a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 shrink-0">
+                    <Smartphone size={24} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Phone Number</p>
+                    <p className="text-lg font-bold text-slate-700">+91-8887374175</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 shrink-0">
+                    <Activity size={24} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Location</p>
+                    <p className="text-lg font-bold text-slate-700">Prayagraj, UP, India</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-10 pt-10 border-t border-slate-100 italic text-slate-400 text-sm">
+                Domain registered March 2026. We're early-stage but committed to your trust and privacy.
+              </div>
+            </motion.div>
           </div>
-          
-          <div className="p-8 bg-white rounded-[2rem] border border-slate-200 mb-12">
-            <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-primary">
-                  <ShieldCheck size={24} />
-                </div>
-                <div>
-                  <p className="text-sm font-black text-slate-900">100% Private & Secure</p>
-                  <p className="text-xs font-bold text-slate-600">Your data is encrypted and never stored.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500">
-                  <AlertCircle size={24} />
-                </div>
-                <p className="text-[10px] font-bold text-amber-700 max-w-xs leading-tight">
-                  This tool provides AI-generated insights and is not a substitute for professional medical advice.
-                </p>
-              </div>
+        </div>
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-primary/5 -skew-x-12 translate-x-1/2 pointer-events-none"></div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-white py-20 px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+              <Activity size={20} />
             </div>
+            <span className="text-xl font-black tracking-tight">RxDecode</span>
           </div>
 
-          <div className="pt-12 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-sm font-bold text-slate-600">© 2026 RXDecode AI. All rights reserved.</p>
-            <p className="text-sm font-bold text-slate-600">Always consult a doctor before making health decisions.</p>
-          </div>
+          <p className="text-slate-400 font-bold mb-6">
+            &copy; 2026 RxDecode. All rights reserved. | 
+            <Link to="/disclaimer" className="mx-2 hover:text-white transition-colors">Privacy</Link> | 
+            <Link to="/disclaimer" className="mx-2 hover:text-white transition-colors">Terms</Link> | 
+            <Link to="/disclaimer" className="mx-2 hover:text-white transition-colors">Disclaimer</Link> | 
+            <a href="#about" className="mx-2 hover:text-white transition-colors">About</a> | 
+            <a href="mailto:hello@rxdecode.com" className="mx-2 hover:text-white transition-colors">hello@rxdecode.com</a>
+          </p>
+
+          <p className="text-slate-500 font-bold text-sm tracking-widest uppercase flex flex-wrap justify-center gap-4">
+            <span>AI-powered</span>
+            <span className="hidden sm:inline opacity-30">•</span>
+            <span>Built in India</span>
+            <span className="hidden sm:inline opacity-30">•</span>
+            <span>Not medical advice</span>
+          </p>
         </div>
       </footer>
     </div>

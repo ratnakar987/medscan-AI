@@ -389,9 +389,9 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
             <h4 className="text-xs font-black uppercase tracking-[0.2em] text-amber-600 mb-6">Precautions</h4>
             <ul className="space-y-4">
               {precautions.map((item: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-3 text-sm font-bold text-amber-900/80">
+                <li key={idx} className="flex items-start gap-3 text-sm font-bold text-amber-900/80 break-words">
                   <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                  {item}
+                  <span className="flex-1">{item}</span>
                 </li>
               ))}
             </ul>
@@ -408,9 +408,9 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
             <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-6">Next Steps</h4>
             <ul className="space-y-4">
               {nextSteps.map((item: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-3 text-sm font-bold text-slate-700">
+                <li key={idx} className="flex items-start gap-3 text-sm font-bold text-slate-700 break-words">
                   <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                  {item}
+                  <span className="flex-1">{item}</span>
                 </li>
               ))}
             </ul>
@@ -434,9 +434,9 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
                 <p className="text-xs text-slate-600 mb-3">{report.summary}</p>
                 <ul className="space-y-1">
                   {report.findings.map((finding: string, j: number) => (
-                    <li key={j} className="text-[11px] text-slate-500 flex items-start gap-2">
+                    <li key={j} className="text-[11px] text-slate-500 flex items-start gap-2 break-words">
                       <div className="mt-1.5 w-1 h-1 rounded-full bg-primary shrink-0" />
-                      {finding}
+                      <span className="flex-1">{finding}</span>
                     </li>
                   ))}
                 </ul>
@@ -664,7 +664,7 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {toEat.map((item: any, idx: number) => (
-                    <div key={idx} className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm">
+                    <div key={idx} className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm break-words">
                       <h5 className="font-bold text-emerald-800 text-sm mb-1">{item.food}</h5>
                       <p className="text-xs text-slate-600 leading-tight">{item.benefit || item.reason}</p>
                     </div>
@@ -680,7 +680,7 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {toAvoid.map((item: any, idx: number) => (
-                    <div key={idx} className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm">
+                    <div key={idx} className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm break-words">
                       <h5 className="font-bold text-rose-800 text-sm mb-1">{item.food}</h5>
                       <p className="text-xs text-slate-600 leading-tight">{item.reason || item.benefit}</p>
                     </div>
@@ -708,9 +708,9 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
           </div>
           <ul className="space-y-3 m-0 p-0 list-none">
             {recommendations.map((rec: string, idx: number) => (
-              <li key={idx} className="flex items-start gap-3 text-amber-900/80 text-sm">
+              <li key={idx} className="flex items-start gap-3 text-amber-900/80 text-sm break-words">
                 <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                {rec}
+                <span className="flex-1">{rec}</span>
               </li>
             ))}
           </ul>
