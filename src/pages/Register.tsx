@@ -33,13 +33,20 @@ const Register: React.FC = () => {
       await updateProfile(user, { displayName: name });
       
       await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
+        full_name: name,
         email: user.email,
-        displayName: name,
+        profile_photo: '',
+        google_id: '',
+        auth_provider: "credentials",
+        email_verified: false,
+        account_created_at: serverTimestamp(),
+        last_login: serverTimestamp(),
+        user_role: "user",
+        onboarding_completed: false,
+        // Keep extra fields if they exist from form
         phone: phone,
-        age: parseInt(age),
+        age: parseInt(age) || 0,
         gender: gender,
-        createdAt: serverTimestamp(),
       });
 
       navigate('/dashboard');
@@ -55,24 +62,42 @@ const Register: React.FC = () => {
     provider.setCustomParameters({ prompt: 'select_account' });
     setLoading(true);
     setError('');
+    
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      // For Google login, we merge basic profile info
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        createdAt: serverTimestamp(),
+      if (!user.emailVerified) {
+        throw new Error('Your Google email is not verified. Please verify it to continue.');
+      }
+
+      // 4. REQUIRED USER DATA STRUCTURE
+      const userDocRef = doc(db, 'users', user.uid);
+      const userData = {
+        full_name: user.displayName || 'Unnamed User', // Display name from Google profile
+        email: user.email, // Email from Google
+        profile_photo: user.photoURL || '', // Avatar from Google profile image
+        google_id: user.uid,
+        auth_provider: "google",
+        email_verified: true,
+        last_login: serverTimestamp(),
+        user_role: "user",
+      };
+
+      // Set user data - merging in case the user already exists
+      await setDoc(userDocRef, {
+        ...userData,
+        account_created_at: serverTimestamp(),
+        onboarding_completed: false
       }, { merge: true });
 
+      // 9. WELCOME EXPERIENCE
       navigate('/dashboard');
     } catch (err: any) {
       if (err.code === 'auth/popup-closed-by-user') {
         setError('Registration cancelled. Please try again.');
       } else {
-        setError(err.message);
+        setError(err.message || 'Authentication failed. Please try again.');
       }
     } finally {
       setLoading(false);

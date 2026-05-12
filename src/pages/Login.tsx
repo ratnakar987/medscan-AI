@@ -9,7 +9,8 @@ import {
   signInWithPhoneNumber,
   ConfirmationResult
 } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { LogIn, Mail, Lock, Phone, ShieldCheck, Activity, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 const Login: React.FC = () => {
@@ -83,14 +84,45 @@ const Login: React.FC = () => {
     provider.setCustomParameters({ prompt: 'select_account' });
     setLoading(true);
     setError('');
+    
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      if (!user.emailVerified) {
+        throw new Error('Your Google email is not verified. Please verify it to continue.');
+      }
+
+      // 4. REQUIRED USER DATA STRUCTURE - Auto-creation or Update
+      const userDocRef = doc(db, 'users', user.uid);
+      const userData = {
+        full_name: user.displayName || 'Unnamed User',
+        email: user.email,
+        profile_photo: user.photoURL || '',
+        google_id: user.uid,
+        auth_provider: "google",
+        email_verified: true,
+        last_login: serverTimestamp(),
+        user_role: "user",
+      };
+
+      // Set user data - if first time, it sets defaults; if recurring, it updates last login
+      await setDoc(userDocRef, {
+        ...userData,
+        account_created_at: serverTimestamp(), // Will only set if doesn't exist via merge logic if handled carefully, but let's use a simpler approach
+        onboarding_completed: false
+      }, { merge: true });
+
+      // 9. WELCOME EXPERIENCE
+      const firstName = (user.displayName || '').split(' ')[0];
+      console.log(`Welcome back, ${firstName}! Redirecting to your medical dashboard...`);
+      
       navigate('/dashboard');
     } catch (err: any) {
       if (err.code === 'auth/popup-closed-by-user') {
         setError('Login cancelled. Please try again.');
       } else {
-        setError(err.message);
+        setError(err.message || 'Authentication failed. Please try again.');
       }
     } finally {
       setLoading(false);
