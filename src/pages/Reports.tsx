@@ -41,7 +41,7 @@ const Reports: React.FC = () => {
 
   const filteredReports = reports.filter(r => {
     const diagnosis = r.analysis?.potential_diagnosis_guess || 'Medical Report';
-    const summary = r.analysis?.holistic_summary || r.summary || '';
+    const summary = r.analysis?.summary || r.analysis?.holistic_summary || r.summary || '';
     return diagnosis.toLowerCase().includes(searchTerm.toLowerCase()) ||
            summary.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -117,11 +117,11 @@ const Reports: React.FC = () => {
                   {report.createdAt?.toDate().toLocaleDateString()}
                 </span>
               </div>
-              <h3 className="text-lg font-black text-slate-800 truncate">
+              <h3 className="text-lg font-black text-slate-900 group-hover:text-primary transition-colors truncate">
                 {report.analysis?.potential_diagnosis_guess || report.fileName || (report.fileNames && report.fileNames[0]) || 'Medical Report'}
               </h3>
-              <p className="text-xs text-slate-500 font-bold line-clamp-1 mt-1 opacity-80">
-                {report.analysis?.holistic_summary || report.summary || 'No summary available'}
+              <p className="text-sm text-slate-500 font-medium line-clamp-2 mt-1.5 leading-relaxed opacity-90">
+                {report.analysis?.summary || report.analysis?.holistic_summary || report.summary || 'AI is preparing your detailed health overview...'}
               </p>
             </div>
             <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors">

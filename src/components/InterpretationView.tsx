@@ -60,6 +60,11 @@ interface InterpretationProps {
     health_insights?: string[];
     precautions?: string[];
     next_steps?: string[];
+    clinical_interpretation?: string;
+    possible_explanations?: string[];
+    lifestyle_guidance?: string[];
+    urgent_medical_advice?: string;
+    confidence_and_limitations?: string;
     reports_breakdown?: any[];
     main_findings?: string[];
     ai_analysis?: string;
@@ -94,10 +99,16 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
     }
   }
 
-  const summary = report.holistic_summary || report.summary || analysis.holistic_summary || analysis.summary;
+  const summary = analysis.summary || report.summary || analysis.holistic_summary || report.holistic_summary;
   const easyExplanation = report.easy_explanation || analysis.easy_explanation;
   const keyFindings = report.key_findings || analysis.key_findings || report.main_findings || analysis.main_findings || [];
   const healthInsights = report.health_insights || analysis.health_insights || [];
+  const clinicalInterpretation = analysis.clinical_interpretation || report.clinical_interpretation;
+  const possibleExplanations = analysis.possible_explanations || report.possible_explanations || [];
+  const lifestyleGuidance = analysis.lifestyle_guidance || report.lifestyle_guidance || [];
+  const urgentMedicalAdvice = analysis.urgent_medical_advice || report.urgent_medical_advice;
+  const confidenceAndLimitations = analysis.confidence_and_limitations || report.confidence_and_limitations;
+  
   const precautions = report.precautions || analysis.precautions || [];
   const nextSteps = report.next_steps || analysis.next_steps || analysis.recommendations || [];
   const medicines = report.medicine_list || analysis.medicine_list || analysis.medicines || [];
@@ -119,9 +130,18 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
 
   const getStatusBg = (status: string) => {
     switch (status) {
-      case 'Critical': return 'bg-rose-600';
-      case 'Attention Needed': return 'bg-amber-500';
-      default: return 'bg-emerald-600';
+      case 'Urgent medical attention':
+      case 'Critical': 
+        return 'bg-rose-600';
+      case 'Significant Concern':
+      case 'Attention Needed': 
+        return 'bg-rose-500';
+      case 'Moderate Concern':
+        return 'bg-amber-500';
+      case 'Mild Abnormality':
+        return 'bg-blue-500';
+      default: 
+        return 'bg-emerald-600';
     }
   };
 
@@ -293,7 +313,49 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
         </motion.div>
       </div>
 
-      {/* Key Findings & Insights */}
+      {/* Clinical Interpretation & Urgent Advice */}
+      <div className="flex flex-col gap-6">
+        {clinicalInterpretation && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-indigo-50/50 rounded-[2.5rem] p-8 border border-indigo-100"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                <Stethoscope size={20} />
+              </div>
+              <h3 className="font-black text-xl text-indigo-900">Clinical Interpretation</h3>
+            </div>
+            <p className="text-slate-700 leading-relaxed font-medium">
+              {clinicalInterpretation}
+            </p>
+          </motion.div>
+        )}
+
+        {urgentMedicalAdvice && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-rose-50 rounded-[2.5rem] p-8 border-2 border-rose-200 shadow-lg shadow-rose-100"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center text-rose-600">
+                <AlertCircle size={24} />
+              </div>
+              <div>
+                <h3 className="font-black text-xl text-rose-900">Urgent Medical Advice</h3>
+                <p className="text-xs font-bold text-rose-500 uppercase tracking-widest">Immediate Attention Required</p>
+              </div>
+            </div>
+            <p className="text-lg font-black text-rose-900 leading-relaxed">
+              {urgentMedicalAdvice}
+            </p>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Key Findings & Possible Explanations */}
       <div className="grid lg:grid-cols-2 gap-6">
         {keyFindings.length > 0 && (
           <motion.div 
@@ -313,25 +375,67 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
           </motion.div>
         )}
 
-        {healthInsights.length > 0 && (
+        {possibleExplanations.length > 0 && (
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
             className="bg-white rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm"
           >
-            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Health Insights</h4>
+            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Common Explanations</h4>
             <div className="space-y-4">
-              {healthInsights.map((insight: string, idx: number) => (
+              {possibleExplanations.map((explanation: string, idx: number) => (
                 <div key={idx} className="flex items-start gap-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
                   <div className="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                  <p className="text-sm font-bold text-slate-700 leading-relaxed break-words">{insight}</p>
+                  <p className="text-sm font-bold text-slate-700 leading-relaxed break-words">{explanation}</p>
                 </div>
               ))}
             </div>
           </motion.div>
         )}
       </div>
+
+      {/* Health Insights (from old reports or other sources) */}
+      {healthInsights.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm"
+        >
+          <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Additional Health Insights</h4>
+          <div className="grid md:grid-cols-2 gap-4">
+            {healthInsights.map((insight: string, idx: number) => (
+              <div key={idx} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
+                <CheckCircle2 size={16} className="text-emerald-500 mt-0.5 shrink-0" />
+                <p className="text-xs font-medium text-slate-600">{insight}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Lifestyle Guidance */}
+      {lifestyleGuidance.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+              <Activity size={20} />
+            </div>
+            <h3 className="font-black text-xl text-slate-900">Lifestyle Guidance</h3>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {lifestyleGuidance.map((item: string, idx: number) => (
+              <div key={idx} className="flex items-start gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <CheckCircle2 size={16} className="text-blue-500 mt-0.5 shrink-0" />
+                <p className="text-sm font-bold text-slate-700">{item}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Personalized Diet & Lifestyle */}
       {(toEat.length > 0 || toAvoid.length > 0 || lifestyleHabits.length > 0) && (
@@ -712,7 +816,16 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
       )}
 
       {/* Professional Footer */}
-      <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col items-center gap-4">
+      <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col items-center gap-6">
+        {confidenceAndLimitations && (
+          <div className="max-w-xl text-center bg-slate-50 p-6 rounded-3xl border border-slate-100">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Confidence & Limitations</p>
+            <p className="text-xs font-bold text-slate-600 leading-relaxed italic">
+              {confidenceAndLimitations}
+            </p>
+          </div>
+        )}
+        
         <div className="flex items-center gap-2 text-primary">
           <ShieldCheck size={16} />
           <span className="text-xs font-black uppercase tracking-widest">Verified AI Analysis</span>
