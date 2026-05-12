@@ -71,10 +71,10 @@ export default function About() {
                 </div>
               </section>
 
-              <div className="p-10 bg-slate-900 rounded-[3rem] text-white overflow-hidden relative">
+              <section className="p-10 bg-slate-900 rounded-[3rem] text-white overflow-hidden relative">
                 <div className="relative z-10">
                   <h3 className="text-3xl font-black mb-4">Values & Trust</h3>
-                  <p className="text-slate-400 font-medium mb-6">
+                  <p className="text-slate-300 font-medium mb-6">
                     Domain registered March 2026. We are an early-stage startup, but our commitment to your privacy is absolute. We use secure AWS hosting and state-of-the-art encryption to ensure your reports stay between you and the AI.
                   </p>
                   <div className="flex items-center gap-2 text-[#28A745] font-black text-sm uppercase tracking-widest">
@@ -83,14 +83,14 @@ export default function About() {
                   </div>
                 </div>
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#007BFF]/20 blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
-              </div>
+              </section>
             </div>
           </motion.div>
         </div>
       </main>
 
       <footer className="bg-slate-900 text-white py-12 px-6 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto text-center text-slate-500 text-sm font-bold">
+        <div className="max-w-7xl mx-auto text-center text-slate-300 text-sm font-bold">
            &copy; 2026 RxDecode. All rights reserved.
         </div>
       </footer>

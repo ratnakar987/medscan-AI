@@ -201,7 +201,7 @@ const Landing: React.FC = () => {
             Stop Googling your reports. <br />
             <span className="text-primary">Understand them instantly with medical-grade AI.</span>
           </h2>
-          <div className="mt-12 flex flex-wrap justify-center gap-8 md:gap-16 opacity-50 grayscale invert">
+          <div className="mt-12 flex flex-wrap justify-center gap-8 md:gap-16 opacity-80 grayscale invert">
             <div className="flex items-center gap-2 text-white font-black text-xl">
               <Shield size={24} /> SECURE
             </div>
@@ -506,16 +506,16 @@ const Landing: React.FC = () => {
             <span className="text-xl font-black tracking-tight">RxDecode</span>
           </div>
 
-            <p className="text-slate-400 font-bold mb-6">
+            <p className="text-slate-300 font-bold mb-6">
             &copy; 2026 RxDecode. All rights reserved. | 
-            <Link to="/privacy" className="mx-2 hover:text-white transition-colors">Privacy</Link> | 
-            <Link to="/terms" className="mx-2 hover:text-white transition-colors">Terms</Link> | 
-            <Link to="/disclaimer" className="mx-2 hover:text-white transition-colors">Disclaimer</Link> | 
-            <Link to="/about" className="mx-2 hover:text-white transition-colors">About</Link> | 
+            <Link to="/privacy" className="mx-2 hover:text-white transition-colors underline underline-offset-4 decoration-white/20">Privacy</Link> | 
+            <Link to="/terms" className="mx-2 hover:text-white transition-colors underline underline-offset-4 decoration-white/20">Terms</Link> | 
+            <Link to="/disclaimer" className="mx-2 hover:text-white transition-colors underline underline-offset-4 decoration-white/20">Disclaimer</Link> | 
+            <Link to="/about" className="mx-2 hover:text-white transition-colors underline underline-offset-4 decoration-white/20">About</Link> | 
             <a href="mailto:hello@rxdecode.com" className="mx-2 hover:text-white transition-colors">hello@rxdecode.com</a>
           </p>
 
-          <p className="text-slate-500 font-bold text-sm tracking-widest uppercase flex flex-wrap justify-center gap-4">
+          <p className="text-slate-400 font-bold text-sm tracking-widest uppercase flex flex-wrap justify-center gap-4">
             <span>AI-powered</span>
             <span className="hidden sm:inline opacity-30">•</span>
             <span>Built in India</span>

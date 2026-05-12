@@ -88,8 +88,8 @@ export default function Privacy() {
               </section>
             </div>
 
-            <p className="text-center text-slate-400 text-sm font-bold">
-              Questions about privacy? Email us at <a href="mailto:hello@rxdecode.com" className="text-[#007BFF]">hello@rxdecode.com</a>
+            <p className="text-center text-slate-500 text-sm font-bold">
+              Questions about privacy? Email us at <a href="mailto:hello@rxdecode.com" className="text-[#007BFF] hover:underline transition-all">hello@rxdecode.com</a>
             </p>
           </motion.div>
         </div>

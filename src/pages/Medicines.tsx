@@ -50,48 +50,61 @@ const Medicines: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Medicine Guide</h1>
-        <div className="bg-blue-50 p-2 rounded-xl text-blue-500">
-          <Pill size={20} />
+    <div className="flex flex-col gap-10 py-4">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Medicine Vault</h1>
+          <p className="text-slate-500 font-bold">Track and understand your prescriptions.</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="bg-[#007BFF]/10 p-4 rounded-2xl text-[#007BFF]">
+            <Pill size={32} />
+          </div>
         </div>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+      {/* Search Bar */}
+      <div className="relative group">
+        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#007BFF] transition-colors" size={20} />
         <input
           type="text"
-          placeholder="Search medicines..."
-          className="input-field pl-12"
+          placeholder="Search your medicines..."
+          className="w-full bg-slate-50 border-2 border-transparent focus:border-[#007BFF] focus:bg-white rounded-[2rem] py-5 pl-14 pr-6 outline-none transition-all font-bold text-slate-700 shadow-sm"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <div className="flex flex-col gap-3">
+      {/* Medicines Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredMeds.map((med) => (
           <motion.div
             key={med.id}
             layoutId={med.id}
             onClick={() => setSelectedMed(med)}
-            className="card flex items-center gap-4 cursor-pointer active:scale-95 transition-transform"
+            className="group bg-white p-6 rounded-[2.5rem] border border-slate-100 hover:border-[#007BFF]/30 hover:shadow-xl hover:shadow-slate-200/50 transition-all cursor-pointer flex items-center gap-5"
           >
-            <div className="bg-blue-50 p-3 rounded-xl">
-              <Pill className="text-blue-500" size={24} />
+            <div className="bg-slate-50 p-4 rounded-2xl group-hover:bg-[#007BFF]/5 group-hover:text-[#007BFF] transition-colors">
+              <Pill size={28} />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-slate-800">{med.medicine_name}</h3>
-              <p className="text-xs text-slate-500 line-clamp-1">{med.use}</p>
+              <h3 className="font-black text-xl text-slate-900 mb-1">{med.medicine_name}</h3>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest line-clamp-1">{med.use}</p>
             </div>
-            <ChevronRight className="text-slate-300" size={20} />
+            <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 group-hover:bg-[#007BFF] group-hover:text-white transition-all">
+              <ChevronRight size={20} />
+            </div>
           </motion.div>
         ))}
 
         {filteredMeds.length === 0 && (
-          <div className="text-center py-20">
-            <Pill className="mx-auto text-slate-200 mb-4" size={64} />
-            <p className="text-slate-500">No medicines found in your history.</p>
+          <div className="col-span-full text-center py-32 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-slate-300 mx-auto mb-6 shadow-sm">
+              <Pill size={40} />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-2">No medicines found</h3>
+            <p className="text-slate-500 font-bold">Medicines from your reports will appear here automatically.</p>
           </div>
         )}
       </div>
@@ -102,82 +115,97 @@ const Medicines: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-6"
             onClick={() => setSelectedMed(null)}
           >
             <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto p-6"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="bg-blue-50 p-3 rounded-2xl text-blue-500">
-                    <Pill size={24} />
+              {/* Modal Header */}
+              <div className="p-8 pb-0 flex justify-between items-start">
+                <div className="flex items-center gap-4">
+                  <div className="bg-[#007BFF]/10 p-4 rounded-2xl text-[#007BFF]">
+                    <Pill size={32} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold">{selectedMed.medicine_name}</h3>
-                    <p className="text-slate-500 text-sm">Medicine Details</p>
+                    <h3 className="text-3xl font-black text-slate-900">{selectedMed.medicine_name}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="w-2 h-2 rounded-full bg-[#28A745]"></span>
+                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Medical Insight</p>
+                    </div>
                   </div>
                 </div>
                 <button 
                   onClick={() => setSelectedMed(null)}
-                  className="bg-slate-100 p-2 rounded-full text-slate-500"
+                  className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
                 >
-                  <ChevronRight size={20} className="rotate-90" />
+                  <ChevronRight size={24} className="rotate-90 pointer-events-none" />
                 </button>
               </div>
 
-              <div className="flex flex-col gap-6">
-                <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100">
-                  <div className="flex items-center gap-2 text-blue-600 font-bold mb-2">
-                    <Info size={18} />
-                    <span>Purpose / Use</span>
-                  </div>
-                  <p className="text-slate-700 leading-relaxed">
+              <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                {/* Purpose */}
+                <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <Info size={14} className="text-[#007BFF]" /> Primary Purpose
+                  </h4>
+                  <p className="text-lg font-bold text-slate-700 leading-relaxed">
                     {selectedMed.use}
                   </p>
                 </div>
 
+                {/* Grid Info */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="card bg-slate-50 border-none p-4">
-                    <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">Dosage</p>
-                    <p className="font-bold text-slate-800">{selectedMed.dosage}</p>
+                  <div className="p-6 bg-blue-50/50 rounded-[2rem] border border-blue-100">
+                    <p className="text-[10px] font-black uppercase text-blue-400 tracking-widest mb-2">Dosage</p>
+                    <p className="text-xl font-black text-blue-900">{selectedMed.dosage}</p>
                   </div>
-                  <div className="card bg-slate-50 border-none p-4">
-                    <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">Frequency</p>
-                    <p className="font-bold text-slate-800">{selectedMed.frequency || 'As prescribed'}</p>
+                  <div className="p-6 bg-[#28A745]/5 rounded-[2rem] border border-[#28A745]/10">
+                    <p className="text-[10px] font-black uppercase text-[#28A745] tracking-widest mb-2">Timing</p>
+                    <p className="text-xl font-black text-slate-900">{selectedMed.timing || 'As prescribed'}</p>
                   </div>
                 </div>
 
-                <div className="bg-orange-50 p-5 rounded-2xl border border-orange-100">
-                  <div className="flex items-center gap-2 text-orange-600 font-bold mb-2">
-                    <AlertTriangle size={18} />
-                    <span>Common Side Effects</span>
-                  </div>
-                  <p className="text-slate-700 leading-relaxed text-sm">
-                    {selectedMed.side_effects}
+                {/* Side Effects */}
+                <div className="bg-amber-50/50 p-6 rounded-[2rem] border border-amber-100">
+                  <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <AlertTriangle size={14} /> Safety Observations
+                  </h4>
+                  <p className="text-sm font-bold text-amber-900/80 leading-relaxed">
+                    {selectedMed.side_effects || selectedMed.simple_explanation || 'No unusual side effects detected for this profile.'}
                   </p>
                 </div>
 
-                <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100">
-                  <div className="flex items-center gap-2 text-emerald-600 font-bold mb-2">
-                    <Activity size={18} />
-                    <span>Safety Advice</span>
-                  </div>
-                  <ul className="text-sm text-slate-700 space-y-2 list-disc pl-4">
-                    <li>Take exactly as prescribed by your doctor.</li>
-                    <li>Do not skip doses or stop early.</li>
-                    <li>Inform your doctor if side effects persist.</li>
-                    <li>Keep out of reach of children.</li>
+                {/* General Advice */}
+                <div className="bg-emerald-50/50 p-6 rounded-[2rem] border border-emerald-100">
+                  <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <Activity size={14} /> Usage Protocol
+                  </h4>
+                  <ul className="text-sm font-bold text-emerald-900/70 space-y-3">
+                    <li className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0"></div>
+                      Always take with lukewarm water unless specified otherwise.
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0"></div>
+                      Do not stop treatment abruptly without consulting a physician.
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0"></div>
+                      Store in a cool, dry place away from direct sunlight.
+                    </li>
                   </ul>
                 </div>
 
-                <p className="text-[10px] text-slate-400 italic text-center">
-                  Disclaimer: This information is AI-generated based on your prescription. Always follow your doctor's specific instructions.
-                </p>
+                <div className="pt-4 text-center">
+                  <p className="text-[10px] text-slate-400 font-black italic uppercase tracking-widest leading-loose">
+                    This is an AI summary. <br /> Always cross-verify with your physical prescription.
+                  </p>
+                </div>
               </div>
             </motion.div>
           </motion.div>

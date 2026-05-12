@@ -8,7 +8,7 @@ export default function Disclaimer() {
       <div className="max-w-3xl mx-auto">
         <Link 
           to="/" 
-          className="inline-flex items-center gap-2 text-sm font-black text-slate-400 hover:text-primary transition-colors mb-12 group"
+          className="inline-flex items-center gap-2 text-sm font-black text-slate-500 hover:text-primary transition-colors mb-12 group"
         >
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
           Back to Home
@@ -39,7 +39,7 @@ export default function Disclaimer() {
 
             <div className="space-y-6">
               <div className="flex gap-4">
-                <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 shrink-0 mt-1">1</div>
+                <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 shrink-0 mt-1 uppercase text-[10px] font-black">1</div>
                 <p className="font-medium">We are not doctors, healthcare providers, or licensed medical professionals.</p>
               </div>
               <div className="flex gap-4">
@@ -56,7 +56,7 @@ export default function Disclaimer() {
               </div>
             </div>
 
-            <p className="pt-8 border-t border-slate-100 italic font-medium text-slate-500">
+            <p className="pt-8 border-t border-slate-100 italic font-medium text-slate-600">
               By using this site, you agree to these terms and take full responsibility for your health choices.
             </p>
           </div>

@@ -98,7 +98,7 @@ export default function Terms() {
             </div>
 
             <div className="text-center pt-12 border-t border-slate-100">
-               <p className="text-sm font-bold text-slate-400">Copyright © 2026 RxDecode. All rights reserved.</p>
+               <p className="text-sm font-bold text-slate-500">Copyright © 2026 RxDecode. All rights reserved.</p>
             </div>
           </motion.div>
         </div>

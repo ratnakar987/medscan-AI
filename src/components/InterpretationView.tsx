@@ -51,7 +51,11 @@ interface InterpretationProps {
     confidence_level?: string;
     combined_symptoms?: string[];
     dietary_recommendations?: { food: string; benefit: string }[];
-    diet_recommendations?: { to_eat: { food: string; benefit: string }[]; to_avoid: { food: string; reason: string }[] };
+    diet_recommendations?: { 
+      to_eat: { food: string; reason: string; linked_to?: string }[]; 
+      to_avoid: { food: string; reason: string; linked_to?: string }[];
+      lifestyle_habits?: string[];
+    };
     key_findings?: string[];
     health_insights?: string[];
     precautions?: string[];
@@ -110,6 +114,7 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
   const dietRecommendations = report.diet_recommendations || analysis.diet_recommendations || report.dietary_recommendations || analysis.dietary_recommendations || {};
   const toEat = Array.isArray(dietRecommendations) ? dietRecommendations : (dietRecommendations.to_eat || []);
   const toAvoid = Array.isArray(dietRecommendations) ? [] : (dietRecommendations.to_avoid || []);
+  const lifestyleHabits = dietRecommendations.lifestyle_habits || [];
   const recommendations = nextSteps;
 
   const getStatusBg = (status: string) => {
@@ -328,53 +333,91 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
         )}
       </div>
 
-      {/* Diet Recommendations */}
-      {(toEat.length > 0 || toAvoid.length > 0) && (
+      {/* Personalized Diet & Lifestyle */}
+      {(toEat.length > 0 || toAvoid.length > 0 || lifestyleHabits.length > 0) && (
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm"
+          className="bg-white rounded-[2.5rem] p-6 md:p-10 border border-slate-100 shadow-sm overflow-hidden relative"
         >
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
-              <Heart size={24} />
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-12 h-12 bg-[#28A745]/10 rounded-2xl flex items-center justify-center text-[#28A745]">
+                <Heart size={24} />
+              </div>
+              <div>
+                <h3 className="font-black text-2xl text-slate-900">Personalized Diet & Lifestyle</h3>
+                <p className="text-sm font-bold text-slate-400">Nutritional roadmap based on your biomarkers</p>
+              </div>
             </div>
-            <h3 className="font-black text-2xl text-slate-900">Diet Recommendations</h3>
-          </div>
+  
+            <div className="grid md:grid-cols-2 gap-8">
+              {toEat.length > 0 && (
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#28A745] flex items-center gap-2 mb-2">
+                    <CheckCircle2 size={14} /> Foods to Prioritize
+                  </h4>
+                  <div className="space-y-3">
+                    {toEat.map((item: any, idx: number) => (
+                      <div key={idx} className="p-5 bg-[#28A745]/5 rounded-2xl border border-[#28A745]/10 group hover:border-[#28A745]/30 transition-all">
+                        <div className="flex justify-between items-start gap-2 mb-1">
+                          <p className="text-base font-black text-slate-900">{item.food || item.name}</p>
+                          {item.linked_to && (
+                            <span className="shrink-0 text-[9px] font-black uppercase tracking-widest bg-[#28A745]/10 text-[#28A745] px-2 py-0.5 rounded-full">
+                              Ref: {item.linked_to}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-600 font-bold leading-relaxed">{item.reason || item.benefit}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+  
+              {toAvoid.length > 0 && (
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 flex items-center gap-2 mb-2">
+                    <AlertCircle size={14} /> Foods to Limit
+                  </h4>
+                  <div className="space-y-3">
+                    {toAvoid.map((item: any, idx: number) => (
+                      <div key={idx} className="p-5 bg-rose-50/50 rounded-2xl border border-rose-100 group hover:border-rose-200 transition-all">
+                        <div className="flex justify-between items-start gap-2 mb-1">
+                          <p className="text-base font-black text-slate-900">{item.food || item.name}</p>
+                          {item.linked_to && (
+                            <span className="shrink-0 text-[9px] font-black uppercase tracking-widest bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full">
+                              Ref: {item.linked_to}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-600 font-bold leading-relaxed">{item.reason || item.benefit}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {toEat.length > 0 && (
-              <div>
-                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 mb-4 flex items-center gap-2">
-                  <CheckCircle2 size={14} /> Foods to Eat
+            {lifestyleHabits.length > 0 && (
+              <div className="mt-10 pt-10 border-t border-slate-100">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 flex items-center gap-2 mb-6">
+                  <Activity size={14} /> Meal Habits & Lifestyle
                 </h4>
-                <div className="space-y-3">
-                  {toEat.map((item: any, idx: number) => (
-                    <div key={idx} className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100">
-                      <p className="text-sm font-black text-emerald-900 mb-1">{item.food || item.name}</p>
-                      <p className="text-xs text-emerald-700/80 font-medium">{item.reason || item.benefit}</p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {lifestyleHabits.map((habit: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-blue-500 shadow-sm shrink-0">
+                        <CheckCircle2 size={16} />
+                      </div>
+                      <p className="text-sm font-bold text-slate-700">{habit}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-
-            {toAvoid.length > 0 && (
-              <div>
-                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-rose-600 mb-4 flex items-center gap-2">
-                  <AlertCircle size={14} /> Foods to Avoid
-                </h4>
-                <div className="space-y-3">
-                  {toAvoid.map((item: any, idx: number) => (
-                    <div key={idx} className="p-4 bg-rose-50/50 rounded-2xl border border-rose-100">
-                      <p className="text-sm font-black text-rose-900 mb-1">{item.food || item.name}</p>
-                      <p className="text-xs text-rose-700/80 font-medium">{item.reason || item.benefit}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#28A745]/5 blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
         </motion.div>
       )}
 
@@ -641,56 +684,7 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
         </motion.div>
       )}
 
-      {/* Dietary Recommendations Section */}
-      {(toEat.length > 0 || toAvoid.length > 0) && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="bg-emerald-50/50 rounded-3xl p-6 border border-emerald-100"
-        >
-          <div className="flex items-center gap-2 mb-6 text-emerald-700">
-            <div className="bg-emerald-100 p-2 rounded-xl">
-              <Heart size={20} className="text-emerald-600" />
-            </div>
-            <h3 className="font-bold text-lg">Dietary Recommendations</h3>
-          </div>
 
-          <div className="space-y-6">
-            {toEat.length > 0 && (
-              <div>
-                <h4 className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <CheckCircle2 size={14} /> Foods to Include
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {toEat.map((item: any, idx: number) => (
-                    <div key={idx} className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm break-words">
-                      <h5 className="font-bold text-emerald-800 text-sm mb-1">{item.food}</h5>
-                      <p className="text-xs text-slate-600 leading-tight">{item.benefit || item.reason}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {toAvoid.length > 0 && (
-              <div>
-                <h4 className="text-xs font-black text-rose-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <AlertCircle size={14} /> Foods to Avoid
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {toAvoid.map((item: any, idx: number) => (
-                    <div key={idx} className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm break-words">
-                      <h5 className="font-bold text-rose-800 text-sm mb-1">{item.food}</h5>
-                      <p className="text-xs text-slate-600 leading-tight">{item.reason || item.benefit}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      )}
 
       {/* Recommendations Section */}
       {recommendations.length > 0 && (

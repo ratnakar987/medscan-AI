@@ -17,9 +17,10 @@ export const analyzeMedicalImages = async (images: { base64: string, mimeType: s
     2. Identify KEY FINDINGS (especially abnormal values or critical observations).
     3. Provide a SIMPLE EXPLANATION of what these findings mean in plain language.
     4. Provide HEALTH INSIGHTS (potential underlying conditions or trends).
-    5. Suggest DIET RECOMMENDATIONS (specific foods to eat and avoid) to manage the identified condition.
-    6. List PRECAUTIONS and NEXT STEPS (e.g., follow-up tests, lifestyle changes).
-    7. GUESS the potential disease or condition based on the findings.
+    5. Suggest DIET RECOMMENDATIONS (highly personalized). For every food item, explicitly link it to a specific parameter or finding from the report (e.g., "Eat Spinach because your Hemoglobin is low").
+    6. Provide a section for MEAL TIMING & HABITS (e.g., "Eat dinner 3 hours before bed" if acid reflux is suspected).
+    7. List PRECAUTIONS and NEXT STEPS (e.g., follow-up tests, lifestyle changes).
+    8. GUESS the potential disease or condition based on the findings.
 
     JSON ONLY OUTPUT:
     {
@@ -29,14 +30,15 @@ export const analyzeMedicalImages = async (images: { base64: string, mimeType: s
       "potential_diagnosis_guess": "The most likely disease or condition based on findings",
       "confidence_level": "Low|Medium|High",
       "easy_explanation": "A very simple, empathetic explanation for the patient",
-      "key_findings": ["Finding 1: Detail", "Finding 2: Detail"],
-      "health_insights": ["Insight 1", "Insight 2"],
+      "key_findings": ["Finding 1: Detail"],
+      "health_insights": ["Insight 1"],
       "diet_recommendations": {
-        "to_eat": [{"food": "...", "reason": "..."}],
-        "to_avoid": [{"food": "...", "reason": "..."}]
+        "to_eat": [{"food": "...", "reason": "...", "linked_to": "Specific Parameter Name"}],
+        "to_avoid": [{"food": "...", "reason": "...", "linked_to": "Specific Parameter Name"}],
+        "lifestyle_habits": ["Actionable habit 1", "Actionable habit 2"]
       },
-      "precautions": ["Precaution 1", "Precaution 2"],
-      "next_steps": ["Step 1", "Step 2"],
+      "precautions": ["Precaution 1"],
+      "next_steps": ["Step 1"],
       "medicine_list": [{"name": "...", "dosage": "...", "timing": "...", "purpose": "...", "simple_explanation": "..."}],
       "lab_results": [{"parameter": "...", "value": "...", "unit": "...", "min_ref": 0, "max_ref": 0, "status": "Low|Normal|High", "explanation": "..."}]
     }
