@@ -52,13 +52,14 @@ const Register: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    setLoading(true);
+    setError('');
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      // For Google login, we might want to check if user doc exists, 
-      // but typical register flow usually means first time.
-      // We set basic profile if it's a new user.
+      // For Google login, we merge basic profile info
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         email: user.email,
@@ -68,7 +69,13 @@ const Register: React.FC = () => {
 
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError('Registration cancelled. Please try again.');
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
