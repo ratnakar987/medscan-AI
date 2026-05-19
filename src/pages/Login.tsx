@@ -3,10 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { 
   signInWithEmailAndPassword, 
-  signInWithPopup, 
-  GoogleAuthProvider,
-  RecaptchaVerifier,
   signInWithPhoneNumber,
+  RecaptchaVerifier,
   ConfirmationResult
 } from 'firebase/auth';
 import { auth, db } from '../firebase';
@@ -74,56 +72,6 @@ const Login: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    setLoading(true);
-    setError('');
-    
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      if (!user.emailVerified) {
-        throw new Error('Your Google email is not verified. Please verify it to continue.');
-      }
-
-      // 4. REQUIRED USER DATA STRUCTURE - Auto-creation or Update
-      const userDocRef = doc(db, 'users', user.uid);
-      const userData = {
-        full_name: user.displayName || 'Unnamed User',
-        email: user.email,
-        profile_photo: user.photoURL || '',
-        google_id: user.uid,
-        auth_provider: "google",
-        email_verified: true,
-        last_login: serverTimestamp(),
-        user_role: "user",
-      };
-
-      // Set user data - if first time, it sets defaults; if recurring, it updates last login
-      await setDoc(userDocRef, {
-        ...userData,
-        account_created_at: serverTimestamp(), // Will only set if doesn't exist via merge logic if handled carefully, but let's use a simpler approach
-        onboarding_completed: false
-      }, { merge: true });
-
-      // 9. WELCOME EXPERIENCE
-      const firstName = (user.displayName || '').split(' ')[0];
-      console.log(`Welcome back, ${firstName}! Redirecting to your medical dashboard...`);
-      
-      navigate('/dashboard');
-    } catch (err: any) {
-      if (err.code === 'auth/popup-closed-by-user') {
-        setError('Login cancelled. Please try again.');
-      } else {
-        setError(err.message || 'Authentication failed. Please try again.');
-      }
     } finally {
       setLoading(false);
     }
@@ -305,16 +253,6 @@ const Login: React.FC = () => {
               )}
             </form>
           )}
-
-          <div className="relative my-10">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t-2 border-slate-100"></div></div>
-            <div className="relative flex justify-center text-xs uppercase tracking-[0.2em]"><span className="bg-white px-4 text-slate-400 font-black">Or secure login with</span></div>
-          </div>
-
-          <button onClick={handleGoogleLogin} className="w-full bg-white border-2 border-slate-100 text-slate-900 py-5 rounded-2xl text-lg font-black hover:bg-slate-50 transition-colors flex items-center justify-center gap-4">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" loading="lazy" decoding="async" />
-            Continue with Google
-          </button>
 
           <p className="mt-12 text-center text-slate-500 font-bold">
             New to RxDecode?{' '}

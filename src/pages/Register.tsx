@@ -4,8 +4,6 @@ import { motion } from 'motion/react';
 import { 
   createUserWithEmailAndPassword, 
   updateProfile,
-  signInWithPopup,
-  GoogleAuthProvider
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
@@ -52,53 +50,6 @@ const Register: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    setLoading(true);
-    setError('');
-    
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      
-      if (!user.emailVerified) {
-        throw new Error('Your Google email is not verified. Please verify it to continue.');
-      }
-
-      // 4. REQUIRED USER DATA STRUCTURE
-      const userDocRef = doc(db, 'users', user.uid);
-      const userData = {
-        full_name: user.displayName || 'Unnamed User', // Display name from Google profile
-        email: user.email, // Email from Google
-        profile_photo: user.photoURL || '', // Avatar from Google profile image
-        google_id: user.uid,
-        auth_provider: "google",
-        email_verified: true,
-        last_login: serverTimestamp(),
-        user_role: "user",
-      };
-
-      // Set user data - merging in case the user already exists
-      await setDoc(userDocRef, {
-        ...userData,
-        account_created_at: serverTimestamp(),
-        onboarding_completed: false
-      }, { merge: true });
-
-      // 9. WELCOME EXPERIENCE
-      navigate('/dashboard');
-    } catch (err: any) {
-      if (err.code === 'auth/popup-closed-by-user') {
-        setError('Registration cancelled. Please try again.');
-      } else {
-        setError(err.message || 'Authentication failed. Please try again.');
-      }
     } finally {
       setLoading(false);
     }
@@ -259,16 +210,6 @@ const Register: React.FC = () => {
               {loading ? 'Creating account...' : <><UserPlus size={24} /> Register <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></>}
             </button>
           </form>
-
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t-2 border-slate-100"></div></div>
-            <div className="relative flex justify-center text-xs uppercase tracking-[0.2em]"><span className="bg-white px-4 text-slate-400 font-black">Or sign up with</span></div>
-          </div>
-
-          <button onClick={handleGoogleLogin} className="w-full bg-white border-2 border-slate-100 text-slate-900 py-5 rounded-2xl text-lg font-black hover:bg-slate-50 transition-colors flex items-center justify-center gap-4">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" loading="lazy" decoding="async" />
-            Continue with Google
-          </button>
 
           <p className="mt-10 text-center text-slate-500 font-bold">
             Already have an account?{' '}
