@@ -7,7 +7,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
-import { UserPlus, Mail, Lock, User, Activity, CheckCircle2, ArrowRight } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Activity, CheckCircle2, ArrowRight, Phone } from 'lucide-react';
 
 const Register: React.FC = () => {
   const [name, setName] = useState('');
@@ -148,6 +148,20 @@ const Register: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Mobile Number (For future reference)</label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <input
+                  type="tel"
+                  placeholder="+91 XXXXX XXXXX"
+                  className="w-full bg-slate-50 border-2 border-transparent focus:border-[#28A745] focus:bg-white rounded-2xl py-4 pl-12 pr-4 outline-none transition-all font-bold text-slate-700"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
             </div>

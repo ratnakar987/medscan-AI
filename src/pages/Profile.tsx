@@ -13,6 +13,8 @@ const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<any>({});
   const [saving, setSaving] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -32,6 +34,122 @@ const Profile: React.FC = () => {
     };
     fetchUserData();
   }, [user]);
+
+  const processFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (PNG, JPG, JPEG).');
+      return;
+    }
+    
+    // Quick validation on file size before processing (~10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File is too large. Please select an image under 10MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = async () => {
+        // Create canvas to downscale image so it stays light in database and loads instantly
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 256;
+        const MAX_HEIGHT = 256;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+          if (user) {
+            setSaving(true);
+            try {
+              const docRef = doc(db, 'users', user.uid);
+              await updateDoc(docRef, { profile_photo: dataUrl });
+              await updateAuthProfile(user, { photoURL: dataUrl });
+              setUserData((prev: any) => ({ ...prev, profile_photo: dataUrl }));
+            } catch (err) {
+              handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
+            } finally {
+              setSaving(false);
+            }
+          }
+        }
+      };
+      img.onerror = () => {
+        alert('Failed to load image. Please try another image file.');
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => {
+      alert('Failed to read file. Please try again.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      processFile(e.target.files[0]);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const docRef = doc(db, 'users', user.uid);
+      await updateDoc(docRef, { profile_photo: '' });
+      await updateAuthProfile(user, { photoURL: '' });
+      setUserData((prev: any) => ({ ...prev, profile_photo: '' }));
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -65,20 +183,73 @@ const Profile: React.FC = () => {
     { icon: HelpCircle, label: 'Help & Support', color: 'text-purple-500', bg: 'bg-purple-50' },
   ];
 
+  const profileImgSrc = userData?.profile_photo || user?.photoURL;
+
   return (
     <div className="flex flex-col gap-10 pb-20">
       {/* Profile Header */}
       <div className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden">
         <div className="relative z-10 flex flex-col items-center">
           <div className="relative group">
-            <div className="w-32 h-32 bg-slate-50 rounded-[2.5rem] flex items-center justify-center text-[#007BFF] border-[6px] border-white shadow-2xl overflow-hidden transition-transform group-hover:scale-105 duration-500">
-              {user?.photoURL ? (
-                <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+            {profileImgSrc && !saving && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemovePhoto();
+                }}
+                title="Remove photo"
+                className="absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white p-2.5 rounded-2xl border-4 border-white shadow-xl motion-safe:hover:scale-110 active:scale-95 transition-all z-20"
+              >
+                <X size={12} className="font-extrabold stroke-[3px]" />
+              </button>
+            )}
+
+            <div 
+              onDragEnter={handleDrag}
+              onDragOver={handleDrag}
+              onDragLeave={handleDrag}
+              onDrop={handleDrop}
+              onClick={triggerFileInput}
+              className={`relative cursor-pointer w-32 h-32 rounded-[2.5rem] flex items-center justify-center border-[6px] border-white shadow-2xl overflow-hidden transition-all duration-300 ${
+                dragActive 
+                  ? 'bg-blue-50 border-[#007BFF] scale-110 ring-8 ring-blue-100/50 animate-pulse' 
+                  : 'bg-slate-50 group-hover:scale-105 duration-500'
+              }`}
+            >
+              <input 
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+              
+              {saving ? (
+                <Loader2 size={32} className="animate-spin text-[#007BFF]" />
+              ) : profileImgSrc ? (
+                <>
+                  <img src={profileImgSrc} alt="Profile" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity duration-300">
+                    <Edit2 size={24} className="text-white mb-1" />
+                    <span className="text-white text-[9px] font-black uppercase tracking-widest bg-slate-900/60 px-2 py-1 rounded-lg">Change</span>
+                  </div>
+                </>
               ) : (
-                <User size={64} className="opacity-20" />
+                <div className="flex flex-col items-center gap-1 p-2 text-center select-none">
+                  <User size={36} className="opacity-20 text-[#007BFF]" />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-[#007BFF]/40 group-hover:text-[#007BFF] transition-colors">Choose/Drop</span>
+                </div>
               )}
             </div>
-            <button className="absolute -bottom-2 -right-2 bg-[#007BFF] text-white p-3 rounded-2xl border-4 border-white shadow-lg motion-safe:hover:scale-110 active:scale-95 transition-all">
+
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                triggerFileInput();
+              }}
+              className="absolute -bottom-2 -right-2 bg-[#007BFF] text-white p-3 rounded-2xl border-4 border-white shadow-lg motion-safe:hover:scale-110 active:scale-95 transition-all"
+            >
               <Edit2 size={16} />
             </button>
           </div>
