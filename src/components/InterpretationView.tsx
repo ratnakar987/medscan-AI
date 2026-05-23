@@ -122,6 +122,15 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
   const healthStatus = report.overall_health_status || analysis.overall_health_status || 'Good';
   const urgency = report.urgency_level || analysis.urgency_level;
   
+  const reportObj = report as any;
+  const patientDetails = analysis.patient_details || reportObj.patient_details || {};
+  const patientName = patientDetails.name || analysis.patient_name || reportObj.patient_name || 'Valued User';
+  const patientAge = patientDetails.age || analysis.patient_age || reportObj.patient_age || '';
+  const patientGender = patientDetails.gender || analysis.patient_gender || reportObj.patient_gender || '';
+  const labName = patientDetails.lab_name || analysis.lab_name || reportObj.lab_name || '';
+  const doctorName = patientDetails.doctor_name || analysis.doctor_name || reportObj.doctor_name || '';
+  const testDate = patientDetails.test_date || analysis.test_date || reportObj.test_date || '';
+  
   const dietRecommendations = report.diet_recommendations || analysis.diet_recommendations || report.dietary_recommendations || analysis.dietary_recommendations || {};
   const toEat = Array.isArray(dietRecommendations) ? dietRecommendations : (dietRecommendations.to_eat || []);
   const toAvoid = Array.isArray(dietRecommendations) ? [] : (dietRecommendations.to_avoid || []);
@@ -217,25 +226,35 @@ const InterpretationView: React.FC<InterpretationProps> = ({ report }) => {
           </div>
         </div>
 
-        {/* Patient Information Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 p-4 md:p-6 bg-slate-50 rounded-2xl md:rounded-3xl border border-slate-100">
+        {/* Patient & Laboratory Information Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 p-5 md:p-6 bg-slate-50 rounded-2xl md:rounded-3xl border border-slate-100">
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Patient Name</p>
-            <p className="text-sm font-bold text-slate-900">Valued User</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Patient Details</p>
+            <p className="text-sm font-black text-slate-900 break-words">{patientName}</p>
+            {(patientAge || patientGender) && (
+              <p className="text-[11px] font-bold text-slate-500 mt-1">
+                {[patientAge, patientGender].filter(Boolean).join(' • ')}
+              </p>
+            )}
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Laboratory / Clinic</p>
+            <p className="text-sm font-black text-slate-900 break-words">{labName || 'Not detected in document'}</p>
+            {testDate && (
+              <p className="text-[11px] font-bold text-slate-500 mt-1">Date: {testDate}</p>
+            )}
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Prescribing Doctor</p>
+            <p className="text-sm font-black text-slate-900 break-words">{doctorName || 'Not detected in document'}</p>
+            {testDate && !labName && (
+              <p className="text-[11px] font-bold text-slate-500 mt-1">Report Date: {testDate}</p>
+            )}
           </div>
           <div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Analysis Type</p>
-            <p className="text-sm font-bold text-slate-900 capitalize">{report.type?.replace('_', ' ') || 'Medical Report'}</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Urgency</p>
-            <p className={`text-sm font-black ${urgency === 'High' ? 'text-rose-600' : urgency === 'Medium' ? 'text-amber-600' : 'text-emerald-600'}`}>
-              {urgency || 'Normal'}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
-            <p className="text-sm font-bold text-slate-900">{healthStatus}</p>
+            <p className="text-sm font-black text-slate-900 capitalize break-words">{report.type?.replace('_', ' ') || 'Medical Report'}</p>
+            <p className="text-[11px] font-bold text-slate-500 mt-1">Status: {healthStatus}</p>
           </div>
         </div>
 
